@@ -29,6 +29,30 @@ My personal dotfiles for creating a productive and aesthetically pleasing develo
 
 Most components are themed with [Catppuccin Macchiato](https://github.com/catppuccin/catppuccin), a soothing pastel theme.
 
+## 🔧 Getting Started with chezmoi
+
+This dotfiles repository is managed with [chezmoi](https://www.chezmoi.io/), a powerful yet straightforward dotfiles manager.
+
+### Installation
+
+1. Install chezmoi:
+   ```sh
+   sh -c "$(curl -fsLS get.chezmoi.io)"
+   ```
+   Or use your package manager: `brew install chezmoi`, `apt install chezmoi`, etc.
+
+2. Set up your dotfiles on a new machine with a single command:
+   ```sh
+   chezmoi init --apply sadorlovsky
+   ```
+
+### Updates
+
+Pull the latest changes and apply them:
+```sh
+chezmoi update -v
+```
+
 ## 📄 License
 
 MIT
