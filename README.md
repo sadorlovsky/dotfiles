@@ -1,56 +1,89 @@
 # 🌟 Zach's dotfiles
 
-My personal dotfiles for creating a productive and aesthetically pleasing development environment.
+Personal dotfiles for a fast, XDG-clean, and good-looking terminal environment.
+Managed with [chezmoi](https://www.chezmoi.io/).
 
-![Catppuccin Macchiato](https://img.shields.io/badge/Theme-Catppuccin_Macchiato-blue)
 ![WezTerm](https://img.shields.io/badge/Terminal-WezTerm-orange)
 ![ZSH](https://img.shields.io/badge/Shell-ZSH-yellow)
-
-## ✨ Features
-
-- **Minimal & clean**: Focused configurations without unnecessary bloat
-- **Modern shell**: ZSH with Zap plugin manager for speed and convenience
-- **Elegant terminal**: WezTerm with custom bottom bar and Catppuccin theme
+![Starship](https://img.shields.io/badge/Prompt-Starship-ff69b4)
 
 ## 📦 What's inside
 
-- `.zshrc` - ZSH configuration with zap, syntax highlighting, and useful plugins
-- `.wezterm.lua` - WezTerm terminal configuration with custom bar and theme
+| Path | What |
+|------|------|
+| `~/.config/zsh/.zshenv` | XDG base dirs, `EDITOR`/`VISUAL`, per-shell env |
+| `~/.config/zsh/.zprofile` | Homebrew shell env (login shells) |
+| `~/.config/zsh/.zshrc` | Interactive shell: history, completion, plugins, aliases |
+| `~/.config/wezterm/wezterm.lua` | WezTerm: runtime theme switcher + auto light/dark |
+| `~/.config/starship.toml` | Starship prompt |
 
-## 🚀 Key tools
+ZSH lives under `~/.config/zsh` via `ZDOTDIR`, so `$HOME` stays clean. No plugin
+manager — plugins are installed with Homebrew and sourced directly.
 
-- [Zap](https://github.com/zap-zsh/zap) - Lightning fast ZSH plugin manager
-- [Starship](https://starship.rs/) - Customizable cross-shell prompt
-- [Zoxide](https://github.com/ajeetdsouza/zoxide) - Smarter cd command
-- [fzf](https://github.com/junegunn/fzf) - Fuzzy finder
-- [WezTerm](https://wezfurlong.org/wezterm/) - GPU-accelerated terminal emulator
+## 🚀 Tools
 
-## 🎨 Theme
+- [Starship](https://starship.rs/) — prompt
+- [zoxide](https://github.com/ajeetdsouza/zoxide) — smarter `cd`
+- [fzf](https://github.com/junegunn/fzf) + [fd](https://github.com/sharkdp/fd) — fuzzy finder
+- [fzf-tab](https://github.com/Aloxaf/fzf-tab) — fuzzy completion menu
+- [eza](https://github.com/eza-community/eza) — `ls` replacement
+- [bat](https://github.com/sharkdp/bat) — `cat`/pager with syntax highlighting
+- [vivid](https://github.com/sharkdp/vivid) — `LS_COLORS` generator
+- zsh-autosuggestions, zsh-syntax-highlighting, zsh-history-substring-search
+- [WezTerm](https://wezfurlong.org/wezterm/) — GPU-accelerated terminal
 
-Most components are themed with [Catppuccin Macchiato](https://github.com/catppuccin/catppuccin), a soothing pastel theme.
+## 🎨 Theming
 
-## 🔧 Getting Started with chezmoi
+Colors follow the macOS light/dark system appearance automatically:
 
-This dotfiles repository is managed with [chezmoi](https://www.chezmoi.io/), a powerful yet straightforward dotfiles manager.
+- **WezTerm** — a "minimal" theme family auto-switches with the OS; `CTRL+SHIFT+T`
+  opens a fuzzy theme picker.
+- **`LS_COLORS`** (eza + completion) — dark → `catppuccin-mocha`, light → `gruvbox-light-hard`.
+- **Claude Code** — `COLORFGBG` is set from the system appearance so its `auto`
+  theme tracks the OS instead of getting stuck on light.
 
-### Installation
+## 🔧 Setup on a new machine
 
-1. Install chezmoi:
+1. Install [chezmoi](https://www.chezmoi.io/) and apply the dotfiles:
    ```sh
-   sh -c "$(curl -fsLS get.chezmoi.io)"
-   ```
-   Or use your package manager: `brew install chezmoi`, `apt install chezmoi`, etc.
-
-2. Set up your dotfiles on a new machine with a single command:
-   ```sh
+   brew install chezmoi
    chezmoi init --apply sadorlovsky
    ```
 
-### Updates
+2. Install the tools:
+   ```sh
+   brew install starship zoxide fzf fd eza bat vivid \
+     zsh-autosuggestions zsh-syntax-highlighting zsh-history-substring-search
+   ```
 
-Pull the latest changes and apply them:
+3. Clone `fzf-tab` (not on Homebrew):
+   ```sh
+   git clone --depth 1 https://github.com/Aloxaf/fzf-tab.git \
+     ~/.local/share/zsh/plugins/fzf-tab
+   ```
+
+4. Bootstrap `ZDOTDIR` so zsh finds its config under `~/.config/zsh`.
+   This is a system file outside `$HOME`, so it isn't managed by chezmoi —
+   create it once (requires `sudo`):
+   ```sh
+   sudo tee /etc/zshenv > /dev/null << 'EOF'
+   if [[ -z "$XDG_CONFIG_HOME" ]]; then
+       export XDG_CONFIG_HOME="$HOME/.config"
+   fi
+   if [[ -d "$XDG_CONFIG_HOME/zsh" ]]; then
+       export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
+   fi
+   EOF
+   ```
+
+5. Fonts used by WezTerm: **Fairfax Hax** and **JetBrains Mono** Nerd Font.
+
+## 🔄 Updates
+
 ```sh
-chezmoi update -v
+chezmoi update -v      # pull latest and apply
+chezmoi add <file>     # stage a locally-changed dotfile back into the repo
+chezmoi cd             # open a shell in the source dir to commit & push
 ```
 
 ## 📄 License
