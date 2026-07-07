@@ -1,0 +1,6 @@
+# Bootstrap: zsh reads this from $HOME before ZDOTDIR is known.
+# Point zsh at its config under XDG, then load that directory's own .zshenv
+# (zsh won't read $ZDOTDIR/.zshenv on its own once we set ZDOTDIR here).
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
+[[ -f "$ZDOTDIR/.zshenv" ]] && source "$ZDOTDIR/.zshenv"

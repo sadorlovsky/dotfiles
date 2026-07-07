@@ -11,14 +11,16 @@ Managed with [chezmoi](https://www.chezmoi.io/).
 
 | Path | What |
 |------|------|
+| `~/.zshenv` | Bootstrap: sets `ZDOTDIR` to `~/.config/zsh`, then sources the config below |
 | `~/.config/zsh/.zshenv` | XDG base dirs, `EDITOR`/`VISUAL`, per-shell env |
 | `~/.config/zsh/.zprofile` | Homebrew shell env (login shells) |
 | `~/.config/zsh/.zshrc` | Interactive shell: history, completion, plugins, aliases |
 | `~/.config/wezterm/wezterm.lua` | WezTerm: runtime theme switcher + auto light/dark |
 | `~/.config/starship.toml` | Starship prompt |
 
-ZSH lives under `~/.config/zsh` via `ZDOTDIR`, so `$HOME` stays clean. No plugin
-manager — plugins are installed with Homebrew and sourced directly.
+ZSH lives under `~/.config/zsh` via `ZDOTDIR`, keeping `$HOME` clean — the only
+zsh file left in `$HOME` is `~/.zshenv`, a tiny bootstrap that redirects there.
+No plugin manager — plugins are installed with Homebrew and sourced directly.
 
 ## 🚀 Tools
 
@@ -55,23 +57,10 @@ Colors follow the macOS light/dark system appearance automatically:
    ```
    This also **installs all Homebrew packages** (via a `run_onchange` script that
    runs `brew bundle`) and **clones `fzf-tab`** (via `.chezmoiexternal.toml`) —
-   no manual `brew install` needed.
+   no manual `brew install` needed. `~/.zshenv` (managed here) points `ZDOTDIR`
+   at `~/.config/zsh`, so zsh finds its config with no system-level setup.
 
-3. Bootstrap `ZDOTDIR` so zsh finds its config under `~/.config/zsh`.
-   This is a system file outside `$HOME`, so it isn't managed by chezmoi —
-   create it once (requires `sudo`):
-   ```sh
-   sudo tee /etc/zshenv > /dev/null << 'EOF'
-   if [[ -z "$XDG_CONFIG_HOME" ]]; then
-       export XDG_CONFIG_HOME="$HOME/.config"
-   fi
-   if [[ -d "$XDG_CONFIG_HOME/zsh" ]]; then
-       export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
-   fi
-   EOF
-   ```
-
-4. Fonts used by WezTerm (install manually — not on Homebrew):
+3. Fonts used by WezTerm (install manually — not on Homebrew):
    **Fairfax Hax** and **JetBrains Mono**.
 
 ### Automation
