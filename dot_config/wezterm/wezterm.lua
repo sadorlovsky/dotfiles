@@ -403,6 +403,38 @@ config.mouse_bindings = {
         mods = "NONE",
         action = wezterm.action.SelectTextAtMouseCursor("SemanticZone"),
     },
+    -- Selection without Shift even when the app enables mouse reporting
+    -- (e.g. Claude Code fullscreen): mirror the default select gestures.
+    {
+        event = { Down = { streak = 1, button = "Left" } },
+        mods = "NONE",
+        mouse_reporting = true,
+        action = wezterm.action.SelectTextAtMouseCursor("Cell"),
+    },
+    {
+        event = { Drag = { streak = 1, button = "Left" } },
+        mods = "NONE",
+        mouse_reporting = true,
+        action = wezterm.action.ExtendSelectionToMouseCursor("Cell"),
+    },
+    {
+        event = { Up = { streak = 1, button = "Left" } },
+        mods = "NONE",
+        mouse_reporting = true,
+        action = wezterm.action.CompleteSelection("PrimarySelection"),
+    },
+    {
+        event = { Down = { streak = 2, button = "Left" } },
+        mods = "NONE",
+        mouse_reporting = true,
+        action = wezterm.action.SelectTextAtMouseCursor("Word"),
+    },
+    {
+        event = { Down = { streak = 3, button = "Left" } },
+        mods = "NONE",
+        mouse_reporting = true,
+        action = wezterm.action.SelectTextAtMouseCursor("Line"),
+    },
 }
 
 -- Apply the last-picked theme (persists across reloads/restarts), else default.
@@ -442,6 +474,11 @@ config.keys = {
     -- Jump between shell prompts in the scrollback (needs OSC 133 shell integration)
     { key = "UpArrow", mods = "SHIFT", action = wezterm.action.ScrollToPrompt(-1) },
     { key = "DownArrow", mods = "SHIFT", action = wezterm.action.ScrollToPrompt(1) },
+    -- Reorder tabs
+    { key = "LeftArrow", mods = "CMD|SHIFT", action = wezterm.action.MoveTabRelative(-1) },
+    { key = "RightArrow", mods = "CMD|SHIFT", action = wezterm.action.MoveTabRelative(1) },
+    -- Insert a literal newline (multi-line input in Claude Code and other TUIs)
+    { key = "Enter", mods = "SHIFT", action = wezterm.action.SendString("\x0a") },
     -- Fuzzy-pick a URL visible on screen and open it in the browser
     {
         key = "u",
