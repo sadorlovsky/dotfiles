@@ -44,25 +44,20 @@ Colors follow the macOS light/dark system appearance automatically:
 
 ## 🔧 Setup on a new machine
 
-1. Install [chezmoi](https://www.chezmoi.io/) and apply the dotfiles:
+1. Install [Homebrew](https://brew.sh) and chezmoi:
    ```sh
    brew install chezmoi
+   ```
+
+2. Pull and apply the dotfiles:
+   ```sh
    chezmoi init --apply sadorlovsky
    ```
+   This also **installs all Homebrew packages** (via a `run_onchange` script that
+   runs `brew bundle`) and **clones `fzf-tab`** (via `.chezmoiexternal.toml`) —
+   no manual `brew install` needed.
 
-2. Install the tools:
-   ```sh
-   brew install starship zoxide fzf fd eza bat vivid \
-     zsh-autosuggestions zsh-syntax-highlighting zsh-history-substring-search
-   ```
-
-3. Clone `fzf-tab` (not on Homebrew):
-   ```sh
-   git clone --depth 1 https://github.com/Aloxaf/fzf-tab.git \
-     ~/.local/share/zsh/plugins/fzf-tab
-   ```
-
-4. Bootstrap `ZDOTDIR` so zsh finds its config under `~/.config/zsh`.
+3. Bootstrap `ZDOTDIR` so zsh finds its config under `~/.config/zsh`.
    This is a system file outside `$HOME`, so it isn't managed by chezmoi —
    create it once (requires `sudo`):
    ```sh
@@ -76,7 +71,14 @@ Colors follow the macOS light/dark system appearance automatically:
    EOF
    ```
 
-5. Fonts used by WezTerm: **Fairfax Hax** and **JetBrains Mono** Nerd Font.
+4. Fonts used by WezTerm (install manually — not on Homebrew):
+   **Fairfax Hax** and **JetBrains Mono**.
+
+### Automation
+
+- **`run_onchange_before_install-packages.sh`** — runs `brew bundle` with the
+  package list; re-runs automatically whenever that list changes.
+- **`.chezmoiexternal.toml`** — clones/updates `fzf-tab` (refreshed weekly).
 
 ## 🔄 Updates
 
