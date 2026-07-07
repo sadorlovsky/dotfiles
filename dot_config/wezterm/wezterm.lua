@@ -504,4 +504,10 @@ wezterm.on("window-config-reloaded", function(window)
     window:set_config_overrides(theme_overrides(want))
 end)
 
+-- ============================================================================
+-- Optional add-ons (dormant). Uncomment to enable; see the file's header for
+-- the cheatsheet. Panes/splits, vim-aware navigation, and workspaces:
+-- ============================================================================
+-- require("snippets.panes_workspaces").apply(config)
+
 return config
