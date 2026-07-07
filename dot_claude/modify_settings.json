@@ -1,0 +1,11 @@
+#!/bin/sh
+# chezmoi modify_ script for ~/.claude/settings.json.
+# The file is shared-ownership: Claude Code rewrites it at runtime (plugins,
+# model, /config), so we don't manage it whole — this script receives the
+# current contents on stdin and only enforces the keys we consider canonical.
+# `try input catch {}` handles the fresh-machine case where the file is empty.
+jq -n 'try input catch {}
+  | .statusLine = {
+      "type": "command",
+      "command": "sh ~/.claude/statusline-command.sh"
+    }'
