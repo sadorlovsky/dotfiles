@@ -1,0 +1,8 @@
+# Plugins that aren't on Homebrew — chezmoi clones/updates them on apply.
+
+[".local/share/zsh/plugins/fzf-tab"]
+type = "git-repo"
+url = "https://github.com/Aloxaf/fzf-tab.git"
+refreshPeriod = "168h"
+clone.args = ["--depth=1"]
+pull.args = ["--ff-only"]
