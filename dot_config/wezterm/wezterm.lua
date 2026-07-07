@@ -367,6 +367,44 @@ config.window_decorations = "RESIZE"
 config.default_cursor_style = "SteadyBar"
 -- config.macos_window_background_blur = 50
 
+-- Rendering / performance
+config.front_end = "WebGpu" -- Metal on macOS; revert to "OpenGL" if anything looks off
+config.max_fps = 120
+
+-- Behaviour
+config.scrollback_lines = 20000 -- default is 3500
+config.switch_to_last_active_tab_when_closing_tab = true
+
+-- Subtle visual bell instead of an audible beep
+config.audible_bell = "Disabled"
+config.visual_bell = {
+    fade_in_duration_ms = 75,
+    fade_out_duration_ms = 75,
+    target = "CursorColor",
+}
+
+-- QuickSelect (CTRL+SHIFT+Space): extra one-key-copy targets on top of the defaults
+config.quick_select_patterns = {
+    "[0-9a-f]{7,40}", -- git hashes
+    "\\b\\d{1,3}(\\.\\d{1,3}){3}\\b", -- IPv4 addresses
+}
+
+-- Clickable links: built-in rules + bare email addresses
+config.hyperlink_rules = wezterm.default_hyperlink_rules()
+table.insert(config.hyperlink_rules, {
+    regex = [[\b\w+@[\w-]+(\.[\w-]+)+\b]],
+    format = "mailto:$0",
+})
+
+-- Triple-click selects a whole command's output (needs OSC 133 shell integration)
+config.mouse_bindings = {
+    {
+        event = { Down = { streak = 3, button = "Left" } },
+        mods = "NONE",
+        action = wezterm.action.SelectTextAtMouseCursor("SemanticZone"),
+    },
+}
+
 -- Apply the last-picked theme (persists across reloads/restarts), else default.
 local ACTIVE_THEME = read_saved_theme() or DEFAULT_THEME
 for k, v in pairs(theme_overrides(resolve_theme(ACTIVE_THEME))) do
@@ -398,6 +436,24 @@ config.keys = {
                     return
                 end
                 apply_theme(window, id)
+            end),
+        }),
+    },
+    -- Jump between shell prompts in the scrollback (needs OSC 133 shell integration)
+    { key = "UpArrow", mods = "SHIFT", action = wezterm.action.ScrollToPrompt(-1) },
+    { key = "DownArrow", mods = "SHIFT", action = wezterm.action.ScrollToPrompt(1) },
+    -- Fuzzy-pick a URL visible on screen and open it in the browser
+    {
+        key = "u",
+        mods = "CTRL|SHIFT",
+        action = wezterm.action.QuickSelectArgs({
+            label = "open url",
+            patterns = { "https?://\\S+" },
+            action = wezterm.action_callback(function(window, pane)
+                local url = window:get_selection_text_for_pane(pane)
+                if url ~= "" then
+                    wezterm.open_with(url)
+                end
             end),
         }),
     },
