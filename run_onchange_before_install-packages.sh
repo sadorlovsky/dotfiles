@@ -26,8 +26,8 @@ brew "zsh-syntax-highlighting"
 brew "zsh-history-substring-search"
 
 # zsh-ai — natural-language command generation (tap, not core homebrew)
-tap "matheus-git/zsh-ai"
-brew "matheus-git/zsh-ai/zsh-ai"
+tap "matheusml/zsh-ai"
+brew "matheusml/zsh-ai/zsh-ai"
 
 # Terminal
 cask "wezterm@nightly"
