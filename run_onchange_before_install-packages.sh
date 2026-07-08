@@ -9,6 +9,12 @@ if ! command -v brew >/dev/null 2>&1; then
     exit 0
 fi
 
+# zsh-ai ships from a third-party tap. Homebrew 6+ refuses to load formulae
+# from untrusted taps when HOMEBREW_REQUIRE_TAP_TRUST is set, so tap and trust
+# it explicitly before the bundle runs.
+brew tap matheusml/zsh-ai
+brew trust --tap matheusml/zsh-ai
+
 brew bundle --file=/dev/stdin <<'BREWFILE'
 # Shell tools
 brew "starship"
@@ -25,8 +31,8 @@ brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
 brew "zsh-history-substring-search"
 
-# zsh-ai — natural-language command generation (tap, not core homebrew)
-tap "matheusml/zsh-ai"
+# zsh-ai — natural-language command generation (from matheusml/zsh-ai tap,
+# tapped and trusted above)
 brew "matheusml/zsh-ai/zsh-ai"
 
 # Terminal
