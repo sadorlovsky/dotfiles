@@ -3,9 +3,12 @@ ROADMAP.md
 CLAUDE.md
 .config/wezterm/.current-theme
 
-{{/* Skip secrets when 1Password can't be reached (app closed/locked), so
-     onepasswordRead doesn't abort apply. ignore = leave the existing
-     rendered secrets.zsh untouched, preserving a previously-set key. */}}
-{{ if ne (output "sh" "-c" "op account get >/dev/null 2>&1 && echo ok || true" | trim) "ok" }}
+{{/* Skip secrets when the 1Password desktop app isn't running, so
+     onepasswordRead doesn't abort apply. Gate on the app PROCESS, not on
+     `op` itself: invoking op here would trigger the CLI<->app integration
+     prompt (Touch ID) and then hang waiting on the absent desktop app.
+     ignore = leave the existing rendered secrets.zsh untouched, preserving
+     a previously-set key. */}}
+{{ if ne (output "sh" "-c" "pgrep -xq 1Password && echo ok || true" | trim) "ok" }}
 .config/zsh/secrets.zsh
 {{ end }}
