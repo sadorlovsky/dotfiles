@@ -37,4 +37,7 @@ brew "matheusml/zsh-ai/zsh-ai"
 
 # Terminal
 cask "wezterm@nightly"
+
+# Fonts — Fairfax Hax (bundled in the Fairfax family) is the WezTerm UI font
+cask "font-fairfax"
 BREWFILE

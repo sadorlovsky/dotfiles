@@ -48,7 +48,7 @@ local themes = {
         name = "Synthwave",
         color_scheme = "Nord (Gogh)",
         font = wezterm.font_with_fallback({
-            { family = "Fairfax Hax", weight = "Medium" },
+            { family = "Fairfax Hax", weight = "Regular" },
             "JetBrains Mono",
         }),
         font_size = 18,
@@ -179,7 +179,7 @@ local themes = {
         name = "Synthwave Minimal (dark)",
         color_scheme = "Catppuccin Mocha",
         font = wezterm.font_with_fallback({
-            { family = "Fairfax Hax", weight = "Medium" },
+            { family = "Fairfax Hax", weight = "Regular" },
             "JetBrains Mono",
         }),
         font_size = 18,
@@ -237,7 +237,7 @@ local themes = {
         name = "Synthwave Minimal (light)",
         color_scheme = "Catppuccin Latte",
         font = wezterm.font_with_fallback({
-            { family = "Fairfax Hax", weight = "Medium" },
+            { family = "Fairfax Hax", weight = "Regular" },
             "JetBrains Mono",
         }),
         font_size = 18,
