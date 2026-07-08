@@ -421,7 +421,7 @@ config.mouse_bindings = {
         event = { Up = { streak = 1, button = "Left" } },
         mods = "NONE",
         mouse_reporting = true,
-        action = wezterm.action.CompleteSelection("PrimarySelection"),
+        action = wezterm.action.CompleteSelectionOrOpenLinkAtMouseCursor("PrimarySelection"),
     },
     {
         event = { Down = { streak = 2, button = "Left" } },

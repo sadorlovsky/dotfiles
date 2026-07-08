@@ -12,6 +12,13 @@ rate_7d_reset=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty
 
 dir=$(basename "$cwd")
 
+# Git branch (empty segment if not a repo)
+branch=$(git -C "$cwd" symbolic-ref --short -q HEAD 2>/dev/null || git -C "$cwd" rev-parse --short HEAD 2>/dev/null)
+branch_seg=""
+if [ -n "$branch" ]; then
+  branch_seg=$(printf "\033[32m⎇ %s\033[0m  " "$branch")
+fi
+
 if [ -n "$used_pct" ] && [ -n "$input_tokens" ] && [ -n "$ctx_size" ]; then
   # Build visual bar (10 chars wide)
   filled=$(echo "$used_pct" | awk '{printf "%d", int($1 / 10 + 0.5)}')
@@ -80,12 +87,12 @@ if [ -n "$used_pct" ] && [ -n "$input_tokens" ] && [ -n "$ctx_size" ]; then
   fi
 
   if [ -n "$rate_info" ]; then
-    printf "\033[34m%s\033[0m  \033[33m%s\033[0m  \033[90m%s\033[0m \033[37m%s/%s (%s%%)\033[0m  \033[36m%s\033[0m" \
-      "$dir" "$model" "$bar" "$used_k" "$total_k" "$pct" "$rate_info"
+    printf "\033[34m%s\033[0m  %s\033[33m%s\033[0m  \033[90m%s\033[0m \033[37m%s/%s (%s%%)\033[0m  \033[36m%s\033[0m" \
+      "$dir" "$branch_seg" "$model" "$bar" "$used_k" "$total_k" "$pct" "$rate_info"
   else
-    printf "\033[34m%s\033[0m  \033[33m%s\033[0m  \033[90m%s\033[0m \033[37m%s/%s (%s%%)\033[0m" \
-      "$dir" "$model" "$bar" "$used_k" "$total_k" "$pct"
+    printf "\033[34m%s\033[0m  %s\033[33m%s\033[0m  \033[90m%s\033[0m \033[37m%s/%s (%s%%)\033[0m" \
+      "$dir" "$branch_seg" "$model" "$bar" "$used_k" "$total_k" "$pct"
   fi
 else
-  printf "\033[34m%s\033[0m  \033[33m%s\033[0m" "$dir" "$model"
+  printf "\033[34m%s\033[0m  %s\033[33m%s\033[0m" "$dir" "$branch_seg" "$model"
 fi
