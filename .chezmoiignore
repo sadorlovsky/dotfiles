@@ -2,3 +2,10 @@ README.md
 ROADMAP.md
 CLAUDE.md
 .config/wezterm/.current-theme
+
+{{/* Skip secrets when 1Password can't be reached (app closed/locked), so
+     onepasswordRead doesn't abort apply. ignore = leave the existing
+     rendered secrets.zsh untouched, preserving a previously-set key. */}}
+{{ if ne (output "sh" "-c" "op account get >/dev/null 2>&1 && echo ok || true" | trim) "ok" }}
+.config/zsh/secrets.zsh
+{{ end }}
