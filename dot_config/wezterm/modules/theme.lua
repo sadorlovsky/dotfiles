@@ -128,7 +128,7 @@ local themes = {
                 },
                 width = "Cover",
                 height = "Cover",
-                hsb = { brightness = 0.6 },
+                hsb = { brightness = 0.45 },
             },
             {
                 source = {
@@ -136,7 +136,7 @@ local themes = {
                 },
                 width = "100%",
                 height = "100%",
-                opacity = 0.78,
+                opacity = 0.85,
             },
         },
         colors = {
