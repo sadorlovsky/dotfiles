@@ -112,6 +112,75 @@ local themes = {
         },
     },
 
+    -- Same as Synthwave, but with the Kung Fury "Hackerman" background image.
+    {
+        name = "Hackerman",
+        color_scheme = "Nord (Gogh)",
+        font = wezterm.font_with_fallback({
+            { family = "Fairfax Hax", weight = "Regular" },
+            "JetBrains Mono",
+        }),
+        font_size = 18,
+        background = {
+            {
+                source = {
+                    File = wezterm.config_dir .. "/hackerman.jpg",
+                },
+                width = "Cover",
+                height = "Cover",
+                hsb = { brightness = 0.6 },
+            },
+            {
+                source = {
+                    Color = "#0c0016",
+                },
+                width = "100%",
+                height = "100%",
+                opacity = 0.78,
+            },
+        },
+        colors = {
+            tab_bar = {
+                background = "#14001a",
+                inactive_tab_edge = "none",
+                active_tab = {
+                    bg_color = "#14001a",
+                    fg_color = "#c77dff",
+                    intensity = "Bold",
+                    italic = false,
+                },
+                inactive_tab = {
+                    bg_color = "#14001a",
+                    fg_color = "#6a3a8a",
+                    italic = false,
+                },
+                inactive_tab_hover = {
+                    bg_color = "#14001a",
+                    fg_color = "#e0aaff",
+                    italic = false,
+                },
+                new_tab = {
+                    bg_color = "#14001a",
+                    fg_color = "#6a3a8a",
+                },
+                new_tab_hover = {
+                    bg_color = "#14001a",
+                    fg_color = "#e0aaff",
+                },
+            },
+        },
+        -- Only used when use_fancy_tab_bar = true; harmless otherwise.
+        window_frame = {
+            font = wezterm.font_with_fallback({
+                { family = "Fairfax Hax", weight = "Bold" },
+                "JetBrains Mono",
+            }),
+            font_size = 18,
+            active_titlebar_bg = "#14001a",
+            inactive_titlebar_bg = "#14001a",
+        },
+    },
+
     -- A calmer, "less nerdy" theme: no background image, standard mono font,
     -- muted Tokyo Night palette. This is the only theme that uses the
     -- wezterm-bar plugin tab bar (see modules/tabbar.lua).
