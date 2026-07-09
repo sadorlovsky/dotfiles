@@ -68,3 +68,13 @@ There is no build/lint/test suite. After editing, run `chezmoi diff` (or `chezmo
 - `dot_config/wezterm/snippets/` holds opt-in config modules (panes/workspaces) enabled by a single `require` line in `wezterm.lua`.
 
 **Secrets are chezmoi templates backed by 1Password.** `private_secrets.zsh.tmpl` uses `onepasswordRead` with an item UUID. Always edit the source template, never the rendered `~/.config/zsh/secrets.zsh` — `chezmoi edit ~/.config/zsh/secrets.zsh` opens the `.tmpl` for you. Rendering requires the 1Password CLI (`op`) to be signed in.
+
+**The repo is a PUBLIC GitHub repo, so anything reconnaissance-sensitive is age-encrypted, not committed in the clear.** `~/.ssh/config` (internal hostnames, IPs, users) lives in source as `private_dot_ssh/encrypted_private_config.age`. Encryption config is in `.chezmoi.toml.tmpl` (`encryption = "age"` + a public `recipient` — safe to commit). The **private** age identity lives only at `~/.config/chezmoi/key.txt` and in 1Password (document `chezmoi-age-key`, Private vault); it is never committed. To edit the ssh config, use `chezmoi edit ~/.ssh/config` (chezmoi decrypts, you edit plaintext, it re-encrypts). To manage another sensitive file the same way: `chezmoi add --encrypt <path>`.
+
+**New-machine bootstrap** (the age key must exist before `chezmoi apply` can decrypt):
+```sh
+brew install chezmoi age 1password-cli && op signin
+op document get chezmoi-age-key --vault Private > ~/.config/chezmoi/key.txt
+chmod 600 ~/.config/chezmoi/key.txt
+chezmoi init --apply sadorlovsky
+```

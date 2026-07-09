@@ -26,6 +26,7 @@ brew "bat"
 brew "vivid"
 brew "jq"
 brew "chezmoi"
+brew "age"                # decrypts encrypted_ source files (e.g. ~/.ssh/config)
 brew "mise"
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"

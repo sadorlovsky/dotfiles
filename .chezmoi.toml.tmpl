@@ -1,0 +1,10 @@
+encryption = "age"
+
+[age]
+    # Private identity lives only on disk + in 1Password ("chezmoi-age-key",
+    # Private vault). It is never committed. Bootstrap on a new machine:
+    #   op document get chezmoi-age-key --vault Private > ~/.config/chezmoi/key.txt
+    #   chmod 600 ~/.config/chezmoi/key.txt
+    identity = {{ printf "%s/.config/chezmoi/key.txt" .chezmoi.homeDir | quote }}
+    # Public recipient — safe to commit; age recipients are meant to be public.
+    recipient = "age1fz64kfh7mmu8csu0z2ywudjjxp6cp2d56dyqfsy72jwl5v0mudusvdmd02"
