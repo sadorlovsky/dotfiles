@@ -14,15 +14,43 @@ Note: the live chezmoi source directory is `~/.local/share/chezmoi`, which is a 
 
 ## Common commands
 
+Prefer chezmoi's own commands over hand-editing files in the source directory — they apply the naming conventions (`dot_`, `private_`, `.tmpl`) and keep source state and `$HOME` in sync.
+
+**Inspect:**
 ```sh
+chezmoi status                    # summary of pending changes (like git status)
 chezmoi diff                      # preview what apply would change in $HOME
+chezmoi verify                    # exit non-zero if $HOME differs from source state
+chezmoi managed                   # list every path chezmoi tracks
+chezmoi cat ~/.config/zsh/.zshrc  # show the rendered target without applying
+chezmoi data                      # dump template variables
+```
+
+**Edit source state (don't edit files in the source dir by hand):**
+```sh
+chezmoi edit ~/.config/zsh/.zshrc         # open the *source* file for a target
+chezmoi edit --apply ~/.config/zsh/.zshrc # edit, then apply in one step
+chezmoi add ~/.config/foo/bar             # start managing a new dotfile
+chezmoi re-add                            # pull external edits of already-managed files back into source
+chezmoi chattr +template <target>         # convert a managed file into a template
+```
+
+**Apply / sync:**
+```sh
 chezmoi apply -v                  # apply source state to $HOME
-chezmoi update -v                 # pull latest from git and apply
-chezmoi add <file>                # stage a locally-changed dotfile back into source state
+chezmoi update -v                 # git pull in the source dir, then apply
+chezmoi merge <target>            # 3-way merge when a target diverged from source
+```
+
+**Source repo & config:**
+```sh
+chezmoi cd                        # subshell in ~/.local/share/chezmoi
+chezmoi git -- status             # run git inside the source dir without cd'ing
+chezmoi edit-config               # edit chezmoi's own config
 chezmoi execute-template < file.tmpl   # test-render a template (needs 1Password CLI for secrets)
 ```
 
-There is no build/lint/test suite. Verify zsh changes by opening a new shell (or `zsh -i -c exit` for startup errors); verify WezTerm changes by saving `wezterm.lua` — WezTerm hot-reloads its config.
+There is no build/lint/test suite. After editing, run `chezmoi diff` (or `chezmoi verify`) to see the effect before `chezmoi apply`. Verify zsh changes by opening a new shell (or `zsh -i -c exit` for startup errors); verify WezTerm changes by saving `wezterm.lua` — WezTerm hot-reloads its config.
 
 ## Architecture
 
@@ -39,4 +67,4 @@ There is no build/lint/test suite. Verify zsh changes by opening a new shell (or
 - `wezterm.lua` defines a theme table (Synthwave + a "minimal" light/dark family). Minimal themes auto-swap on OS appearance change via the `window-config-reloaded` event; the chosen theme persists in `~/.config/wezterm/.current-theme` (a state file, ignored via `.chezmoiignore` — never add it to source). Runtime picker: CTRL+SHIFT+T.
 - `dot_config/wezterm/snippets/` holds opt-in config modules (panes/workspaces) enabled by a single `require` line in `wezterm.lua`.
 
-**Secrets are chezmoi templates backed by 1Password.** `private_secrets.zsh.tmpl` uses `onepasswordRead` with an item UUID. Always edit the `.tmpl` in source state, never the rendered `~/.config/zsh/secrets.zsh`. Rendering requires the 1Password CLI (`op`) to be signed in.
+**Secrets are chezmoi templates backed by 1Password.** `private_secrets.zsh.tmpl` uses `onepasswordRead` with an item UUID. Always edit the source template, never the rendered `~/.config/zsh/secrets.zsh` — `chezmoi edit ~/.config/zsh/secrets.zsh` opens the `.tmpl` for you. Rendering requires the 1Password CLI (`op`) to be signed in.
