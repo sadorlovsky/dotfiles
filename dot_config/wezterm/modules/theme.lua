@@ -1,5 +1,5 @@
 -- ============================================================================
--- Themes: persistence, the theme table, minimal-family auto light/dark, the
+-- Themes: persistence, the theme table, auto light/dark themes, the
 -- runtime picker (CTRL+SHIFT+T), the command-palette entries, and the tab-bar
 -- wiring. This is the tightly-coupled appearance cluster; everything here
 -- revolves around the persisted theme selection.
@@ -242,119 +242,124 @@ local themes = {
         },
     },
 
-    -- Minimal synthwave, DARK: solid background, no image, no transparency.
-    -- Part of the "minimal" family that auto-follows the OS appearance.
+    -- Minimal synthwave: solid background, no image, no transparency. A single
+    -- "auto" theme (auto = true) — one picker entry — whose palette follows the
+    -- OS light/dark setting. theme_overrides() resolves variants[appearance] at
+    -- apply time, so the Dark/Light faces never appear as separate choices.
     {
-        name = "Synthwave Minimal (dark)",
-        color_scheme = "Catppuccin Mocha",
-        font = wezterm.font_with_fallback({
-            { family = "Fairfax Hax", weight = "Regular" },
-            "JetBrains Mono",
-        }),
-        font_size = 18,
-        background = {
-            {
-                source = { Color = "#1e1e2e" },
-                width = "100%",
-                height = "100%",
-            },
-        },
-        colors = {
-            tab_bar = {
-                background = "#181825",
-                inactive_tab_edge = "none",
-                active_tab = {
-                    bg_color = "#181825",
-                    fg_color = "#cba6f7",
-                    intensity = "Bold",
-                    italic = false,
+        name = "Synthwave Minimal",
+        auto = true,
+        variants = {
+            -- DARK face.
+            Dark = {
+                color_scheme = "Catppuccin Mocha",
+                font = wezterm.font_with_fallback({
+                    { family = "Fairfax Hax", weight = "Regular" },
+                    "JetBrains Mono",
+                }),
+                font_size = 18,
+                background = {
+                    {
+                        source = { Color = "#1e1e2e" },
+                        width = "100%",
+                        height = "100%",
+                    },
                 },
-                inactive_tab = {
-                    bg_color = "#181825",
-                    fg_color = "#6c7086",
-                    italic = false,
+                colors = {
+                    tab_bar = {
+                        background = "#181825",
+                        inactive_tab_edge = "none",
+                        active_tab = {
+                            bg_color = "#181825",
+                            fg_color = "#cba6f7",
+                            intensity = "Bold",
+                            italic = false,
+                        },
+                        inactive_tab = {
+                            bg_color = "#181825",
+                            fg_color = "#6c7086",
+                            italic = false,
+                        },
+                        inactive_tab_hover = {
+                            bg_color = "#181825",
+                            fg_color = "#f5c2e7",
+                            italic = false,
+                        },
+                        new_tab = {
+                            bg_color = "#181825",
+                            fg_color = "#6c7086",
+                        },
+                        new_tab_hover = {
+                            bg_color = "#181825",
+                            fg_color = "#f5c2e7",
+                        },
+                    },
                 },
-                inactive_tab_hover = {
-                    bg_color = "#181825",
-                    fg_color = "#f5c2e7",
-                    italic = false,
-                },
-                new_tab = {
-                    bg_color = "#181825",
-                    fg_color = "#6c7086",
-                },
-                new_tab_hover = {
-                    bg_color = "#181825",
-                    fg_color = "#f5c2e7",
-                },
-            },
-        },
-        window_frame = {
-            font = wezterm.font_with_fallback({
-                { family = "Fairfax Hax", weight = "Bold" },
-                "JetBrains Mono",
-            }),
-            font_size = 18,
-            active_titlebar_bg = "#181825",
-            inactive_titlebar_bg = "#181825",
-        },
-    },
-
-    -- Minimal synthwave, LIGHT: solid light background, no image, no transparency.
-    -- Part of the "minimal" family that auto-follows the OS appearance.
-    {
-        name = "Synthwave Minimal (light)",
-        color_scheme = "Catppuccin Latte",
-        font = wezterm.font_with_fallback({
-            { family = "Fairfax Hax", weight = "Regular" },
-            "JetBrains Mono",
-        }),
-        font_size = 18,
-        background = {
-            {
-                source = { Color = "#eff1f5" },
-                width = "100%",
-                height = "100%",
-            },
-        },
-        colors = {
-            tab_bar = {
-                background = "#e6e9ef",
-                inactive_tab_edge = "none",
-                active_tab = {
-                    bg_color = "#e6e9ef",
-                    fg_color = "#8839ef",
-                    intensity = "Bold",
-                    italic = false,
-                },
-                inactive_tab = {
-                    bg_color = "#e6e9ef",
-                    fg_color = "#8c8fa1",
-                    italic = false,
-                },
-                inactive_tab_hover = {
-                    bg_color = "#e6e9ef",
-                    fg_color = "#ea76cb",
-                    italic = false,
-                },
-                new_tab = {
-                    bg_color = "#e6e9ef",
-                    fg_color = "#8c8fa1",
-                },
-                new_tab_hover = {
-                    bg_color = "#e6e9ef",
-                    fg_color = "#ea76cb",
+                window_frame = {
+                    font = wezterm.font_with_fallback({
+                        { family = "Fairfax Hax", weight = "Bold" },
+                        "JetBrains Mono",
+                    }),
+                    font_size = 18,
+                    active_titlebar_bg = "#181825",
+                    inactive_titlebar_bg = "#181825",
                 },
             },
-        },
-        window_frame = {
-            font = wezterm.font_with_fallback({
-                { family = "Fairfax Hax", weight = "Bold" },
-                "JetBrains Mono",
-            }),
-            font_size = 18,
-            active_titlebar_bg = "#e6e9ef",
-            inactive_titlebar_bg = "#e6e9ef",
+            -- LIGHT face.
+            Light = {
+                color_scheme = "Catppuccin Latte",
+                font = wezterm.font_with_fallback({
+                    { family = "Fairfax Hax", weight = "Regular" },
+                    "JetBrains Mono",
+                }),
+                font_size = 18,
+                background = {
+                    {
+                        source = { Color = "#eff1f5" },
+                        width = "100%",
+                        height = "100%",
+                    },
+                },
+                colors = {
+                    tab_bar = {
+                        background = "#e6e9ef",
+                        inactive_tab_edge = "none",
+                        active_tab = {
+                            bg_color = "#e6e9ef",
+                            fg_color = "#8839ef",
+                            intensity = "Bold",
+                            italic = false,
+                        },
+                        inactive_tab = {
+                            bg_color = "#e6e9ef",
+                            fg_color = "#8c8fa1",
+                            italic = false,
+                        },
+                        inactive_tab_hover = {
+                            bg_color = "#e6e9ef",
+                            fg_color = "#ea76cb",
+                            italic = false,
+                        },
+                        new_tab = {
+                            bg_color = "#e6e9ef",
+                            fg_color = "#8c8fa1",
+                        },
+                        new_tab_hover = {
+                            bg_color = "#e6e9ef",
+                            fg_color = "#ea76cb",
+                        },
+                    },
+                },
+                window_frame = {
+                    font = wezterm.font_with_fallback({
+                        { family = "Fairfax Hax", weight = "Bold" },
+                        "JetBrains Mono",
+                    }),
+                    font_size = 18,
+                    active_titlebar_bg = "#e6e9ef",
+                    inactive_titlebar_bg = "#e6e9ef",
+                },
+            },
         },
     },
 }
@@ -367,8 +372,27 @@ for _, t in ipairs(themes) do
     themes_by_name[t.name] = t
 end
 
+-- The OS light/dark setting, plus its coarse "Dark"/"Light" key for indexing an
+-- auto theme's variants. Falls back to Dark when there's no GUI (e.g. mux
+-- server). Defined here because theme_overrides() below closes over them.
+local function current_appearance()
+    if wezterm.gui then
+        return wezterm.gui.get_appearance() -- "Light" / "Dark" / *HighContrast
+    end
+    return "Dark"
+end
+
+local function appearance_key()
+    return current_appearance():find("Dark") and "Dark" or "Light"
+end
+
 local function theme_overrides(name)
     local t = themes_by_name[name] or themes_by_name[DEFAULT_THEME]
+    -- Auto themes carry variants.Dark / variants.Light; pick the one matching
+    -- the current OS appearance. Plain themes use their own top-level fields.
+    if t.auto then
+        t = t.variants[appearance_key()]
+    end
     return {
         color_scheme = t.color_scheme,
         font = t.font,
@@ -380,45 +404,27 @@ local function theme_overrides(name)
 end
 
 -- ----------------------------------------------------------------------------
--- Minimal family: these themes auto-follow the OS light/dark setting. Picking
--- either one enters "minimal-auto" mode; the OS then decides which face shows.
+-- Auto themes follow the OS light/dark setting: an entry with auto = true holds
+-- variants.Dark / variants.Light and shows as a single picker choice. The face
+-- is resolved by theme_overrides()/appearance_key() (above); is_auto() just
+-- reports whether a saved selection is one of these OS-following themes.
 -- ----------------------------------------------------------------------------
 
-local MINIMAL_DARK = "Synthwave Minimal (dark)"
-local MINIMAL_LIGHT = "Synthwave Minimal (light)"
-
-local function is_minimal(name)
-    return name == MINIMAL_DARK or name == MINIMAL_LIGHT
+local function is_auto(name)
+    local t = themes_by_name[name]
+    return t ~= nil and t.auto == true
 end
 
-local function current_appearance()
-    if wezterm.gui then
-        return wezterm.gui.get_appearance() -- "Light" / "Dark" / *HighContrast
-    end
-    return "Dark"
-end
-
--- Map a saved selection to the theme that should actually render right now.
--- Minimal selections follow the OS appearance; everything else is literal.
-local function resolve_theme(name)
-    if is_minimal(name) then
-        if current_appearance():find("Dark") then
-            return MINIMAL_DARK
-        end
-        return MINIMAL_LIGHT
-    end
-    return name
-end
-
--- Which tab-bar system a (resolved) theme uses. Only "Clean" is plugin-backed;
--- everything else uses the built-in fancy bar. Crossing this boundary requires
--- a full config reload (see modules/tabbar.lua for why).
+-- Which tab-bar system a theme uses. Only "Clean" is plugin-backed; everything
+-- else (including auto themes, which are never Clean) uses the built-in fancy
+-- bar. Crossing this boundary requires a full config reload (see
+-- modules/tabbar.lua for why).
 local function bar_system(name)
-    return (resolve_theme(name) == "Clean") and "plugin" or "fancy"
+    return (name == "Clean") and "plugin" or "fancy"
 end
 
 -- Apply a theme to a window at runtime and persist the *selection* (not the
--- resolved variant), so a minimal pick keeps following the OS afterwards.
+-- resolved face), so an auto pick keeps following the OS afterwards.
 -- Colours/font/background switch instantly via set_config_overrides. If the
 -- pick crosses the tab-bar-system boundary (into or out of "Clean"), trigger a
 -- full ReloadConfiguration so the build-time branch rewires the correct bar
@@ -426,12 +432,11 @@ end
 local function apply_theme(window, pane, name)
     local prev = read_saved_theme() or DEFAULT_THEME
     save_theme(name)
-    local effective = resolve_theme(name)
-    local applied = wezterm.GLOBAL.minimal_applied or {}
-    applied[tostring(window:window_id())] = is_minimal(name) and effective or nil
-    wezterm.GLOBAL.minimal_applied = applied
-    window:set_config_overrides(theme_overrides(effective))
-    local shown = is_minimal(name) and (effective .. " · auto") or name
+    local applied = wezterm.GLOBAL.auto_applied or {}
+    applied[tostring(window:window_id())] = is_auto(name) and appearance_key() or nil
+    wezterm.GLOBAL.auto_applied = applied
+    window:set_config_overrides(theme_overrides(name))
+    local shown = is_auto(name) and (name .. " · " .. appearance_key() .. " · auto") or name
     window:toast_notification("WezTerm", "Theme: " .. shown, nil, 2000)
     if bar_system(prev) ~= bar_system(name) then
         window:perform_action(wezterm.action.ReloadConfiguration, pane)
@@ -444,7 +449,6 @@ end
 
 M.DEFAULT_THEME = DEFAULT_THEME
 M.read_saved_theme = read_saved_theme
-M.resolve_theme = resolve_theme
 M.apply_theme = apply_theme
 
 local function theme_choices()
@@ -456,16 +460,17 @@ local function theme_choices()
 end
 
 function M.apply(config)
-    -- 1. Determine the active (and resolved) theme up front.
+    -- 1. Determine the active theme up front (auto themes resolve their face
+    --    inside theme_overrides, so the raw name is all we track here).
     local active = read_saved_theme() or DEFAULT_THEME
-    local resolved = resolve_theme(active)
 
     -- 2. Wire the tab bar for that theme BEFORE applying appearance overrides
-    --    (the plugin, when used, mutates config at load time).
-    require("modules.tabbar").apply(config, resolved)
+    --    (the plugin, when used, mutates config at load time). Auto themes are
+    --    never "Clean", so the raw name is enough for the plugin decision.
+    require("modules.tabbar").apply(config, active)
 
     -- 3. Apply the last-picked theme's appearance (persists across restarts).
-    for k, v in pairs(theme_overrides(resolved)) do
+    for k, v in pairs(theme_overrides(active)) do
         config[k] = v
     end
 
@@ -503,27 +508,27 @@ function M.apply(config)
     end)
 
     -- 6. Auto light/dark: wezterm re-evaluates the config when the OS appearance
-    --    flips, firing this event. If the active selection is a minimal theme,
+    --    flips, firing this event. If the active selection is an auto theme,
     --    swap the window to the matching variant. The per-window guard in
     --    wezterm.GLOBAL (which survives reloads) prevents an infinite reload loop.
     wezterm.on("window-config-reloaded", function(window)
         local saved = read_saved_theme() or DEFAULT_THEME
         local wid = tostring(window:window_id())
-        local applied = wezterm.GLOBAL.minimal_applied or {}
-        if not is_minimal(saved) then
+        local applied = wezterm.GLOBAL.auto_applied or {}
+        if not is_auto(saved) then
             if applied[wid] ~= nil then
                 applied[wid] = nil
-                wezterm.GLOBAL.minimal_applied = applied
+                wezterm.GLOBAL.auto_applied = applied
             end
             return
         end
-        local want = resolve_theme(saved)
+        local want = appearance_key()
         if applied[wid] == want then
             return
         end
         applied[wid] = want
-        wezterm.GLOBAL.minimal_applied = applied
-        window:set_config_overrides(theme_overrides(want))
+        wezterm.GLOBAL.auto_applied = applied
+        window:set_config_overrides(theme_overrides(saved))
     end)
 end
 
