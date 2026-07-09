@@ -84,6 +84,17 @@ zstyle ':fzf-tab:complete:*' fzf-preview '
     echo $realpath
   fi
 '
+# Auto-hide the preview pane for non-path candidates (flags, subcommands, etc.),
+# so their descriptions get the full width instead of being squeezed + truncated.
+# fzf-tab packs each candidate as NUL-delimited fields; field 2 ({2}) is the
+# display string. Described candidates carry a description + alignment padding
+# (fzf-tab generates the list at COLUMNS=500), so they either start with '-'
+# (flags) or contain a run of spaces (word + padding + description); bare file /
+# dir names have neither. `result` covers the initial render, `focus` arrow moves.
+zstyle ':fzf-tab:complete:*' fzf-flags \
+  --preview-window='right:55%:wrap' \
+  --bind='result:transform:[[ {2} == -* || {2} == *"  "* ]] && echo "change-preview-window(hidden)" || echo "change-preview-window(right,55%,wrap)"' \
+  --bind='focus:transform:[[ {2} == -* || {2} == *"  "* ]] && echo "change-preview-window(hidden)" || echo "change-preview-window(right,55%,wrap)"'
 
 # =========================================================
 # Prompt & tools
