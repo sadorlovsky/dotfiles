@@ -403,6 +403,42 @@ local function theme_overrides(name)
     }
 end
 
+-- A stable string fingerprint of a theme's overrides, used by the reload handler
+-- to decide whether anything actually changed. It walks the table with sorted
+-- keys (deterministic output) and collapses non-serialisable values — fonts are
+-- userdata — to a constant marker. Colours, background image path/opacity/
+-- brightness, and tab-bar colours are all plain data and thus captured; the one
+-- blind spot is font-family edits (open a fresh window for those).
+local function fingerprint(v, out)
+    local t = type(v)
+    if t == "table" then
+        local keys = {}
+        for k in pairs(v) do
+            keys[#keys + 1] = k
+        end
+        table.sort(keys, function(a, b)
+            return tostring(a) < tostring(b)
+        end)
+        out[#out + 1] = "{"
+        for _, k in ipairs(keys) do
+            out[#out + 1] = tostring(k) .. "="
+            fingerprint(v[k], out)
+            out[#out + 1] = ";"
+        end
+        out[#out + 1] = "}"
+    elseif t == "userdata" or t == "function" then
+        out[#out + 1] = "<" .. t .. ">"
+    else
+        out[#out + 1] = tostring(v)
+    end
+end
+
+local function overrides_signature(name)
+    local out = {}
+    fingerprint(theme_overrides(name), out)
+    return table.concat(out)
+end
+
 -- ----------------------------------------------------------------------------
 -- Auto themes follow the OS light/dark setting: an entry with auto = true holds
 -- variants.Dark / variants.Light and shows as a single picker choice. The face
@@ -425,21 +461,24 @@ end
 
 -- Apply a theme to a window at runtime and persist the *selection* (not the
 -- resolved face), so an auto pick keeps following the OS afterwards.
--- Colours/font/background switch instantly via set_config_overrides. If the
--- pick crosses the tab-bar-system boundary (into or out of "Clean"), trigger a
--- full ReloadConfiguration so the build-time branch rewires the correct bar
--- (a brief one-frame flash).
 local function apply_theme(window, pane, name)
     local prev = read_saved_theme() or DEFAULT_THEME
     save_theme(name)
-    local applied = wezterm.GLOBAL.auto_applied or {}
-    applied[tostring(window:window_id())] = is_auto(name) and appearance_key() or nil
-    wezterm.GLOBAL.auto_applied = applied
-    window:set_config_overrides(theme_overrides(name))
-    local shown = is_auto(name) and (name .. " · " .. appearance_key() .. " · auto") or name
+    local shown = is_auto(name) and (name .. " · auto") or name
     window:toast_notification("WezTerm", "Theme: " .. shown, nil, 2000)
     if bar_system(prev) ~= bar_system(name) then
+        -- Crossing the Clean<->fancy boundary needs a fresh Lua state; the full
+        -- reload rebuilds the base config, and window-config-reloaded then
+        -- re-pushes the appearance overrides.
         window:perform_action(wezterm.action.ReloadConfiguration, pane)
+    else
+        -- Same tab-bar system: swap appearance in place, flash-free. Record the
+        -- signature we're about to push so the reload it triggers is recognised
+        -- as already-applied and the handler below no-ops instead of redoing it.
+        local applied = wezterm.GLOBAL.applied_sig or {}
+        applied[tostring(window:window_id())] = overrides_signature(name)
+        wezterm.GLOBAL.applied_sig = applied
+        window:set_config_overrides(theme_overrides(name))
     end
 end
 
@@ -507,27 +546,33 @@ function M.apply(config)
         return entries
     end)
 
-    -- 6. Auto light/dark: wezterm re-evaluates the config when the OS appearance
-    --    flips, firing this event. If the active selection is an auto theme,
-    --    swap the window to the matching variant. The per-window guard in
-    --    wezterm.GLOBAL (which survives reloads) prevents an infinite reload loop.
+    -- 6. Re-push the persisted theme's appearance on EVERY config reload — a
+    --    file save (CTRL+SHIFT+R), or the automatic reload wezterm does when the
+    --    OS appearance flips. This is what makes edits to this file actually show
+    --    up on reload: set_config_overrides values persist on top of the freshly
+    --    rebuilt base config, so without re-pushing them the window keeps
+    --    rendering the *previous* overrides (the bug where only a brand-new
+    --    window picked up changes). Rebuilding from theme_overrides(saved) reads
+    --    the just-reloaded theme table, so edits and the current OS appearance
+    --    both apply.
+    --
+    --    Loop/no-op guard: compare a content signature of the desired overrides
+    --    against what's already applied (kept in wezterm.GLOBAL, which survives
+    --    reloads). Different -> re-push and record; same -> do nothing. The
+    --    reload our own set_config_overrides triggers recomputes the same
+    --    signature and stops there. Unlike a one-shot echo flag this can't
+    --    desync when a push emits no reload (identical overrides), so no edit is
+    --    ever swallowed on the following reload.
     wezterm.on("window-config-reloaded", function(window)
-        local saved = read_saved_theme() or DEFAULT_THEME
         local wid = tostring(window:window_id())
-        local applied = wezterm.GLOBAL.auto_applied or {}
-        if not is_auto(saved) then
-            if applied[wid] ~= nil then
-                applied[wid] = nil
-                wezterm.GLOBAL.auto_applied = applied
-            end
-            return
-        end
-        local want = appearance_key()
+        local saved = read_saved_theme() or DEFAULT_THEME
+        local want = overrides_signature(saved)
+        local applied = wezterm.GLOBAL.applied_sig or {}
         if applied[wid] == want then
             return
         end
         applied[wid] = want
-        wezterm.GLOBAL.auto_applied = applied
+        wezterm.GLOBAL.applied_sig = applied
         window:set_config_overrides(theme_overrides(saved))
     end)
 end
