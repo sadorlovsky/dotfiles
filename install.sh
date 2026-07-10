@@ -1,7 +1,9 @@
 #!/bin/sh
 # Bootstrap these dotfiles on a fresh macOS machine, end to end:
 #
-#   sh -c "$(curl -fsLS https://raw.githubusercontent.com/sadorlovsky/dotfiles/main/install.sh)"
+#   sh -c "$(curl -fsLS https://dotfiles.orlovsky.dev)"
+#
+# (dotfiles.orlovsky.dev is a Cloudflare 302 → this file's raw GitHub URL.)
 #
 # It brings the machine from "nothing installed" to a fully-applied config:
 #   Xcode CLT → Homebrew → chezmoi + age + 1Password CLI/app → op sign-in

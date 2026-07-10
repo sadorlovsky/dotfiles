@@ -49,7 +49,7 @@ Colors follow the macOS light/dark system appearance automatically:
 One command, from a clean macOS install:
 
 ```sh
-sh -c "$(curl -fsLS https://raw.githubusercontent.com/sadorlovsky/dotfiles/main/install.sh)"
+sh -c "$(curl -fsLS https://dotfiles.orlovsky.dev)"
 ```
 
 [`install.sh`](install.sh) is idempotent and takes the machine end to end:
