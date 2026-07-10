@@ -1,0 +1,123 @@
+# ~/.config/git/config  (chezmoi source: dot_config/git/config)
+# XDG global git config. Single source of truth — there is intentionally
+# no ~/.gitconfig (git prefers ~/.gitconfig over this file if it exists).
+# All values here are public and safe to commit.
+
+[user]
+	name = Zach Orlovsky
+	email = sadorlovsky@gmail.com
+	# SSH key from the 1Password agent ("GitHub (sadorlovsky) 2026").
+	# Used only when signing is requested (git commit -S / git tag -s);
+	# auto-signing is intentionally OFF (see [commit]/[tag] below).
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN4+D+wDvLwQLgBQb5ClcdGGqP4xAudKrgwZ5sNV4ocf
+
+[init]
+	defaultBranch = main
+
+[core]
+	# macOS perf: filesystem monitor + cached untracked-file scan.
+	fsmonitor = true
+	untrackedCache = true
+	# core.excludesfile is unnecessary — git auto-reads ~/.config/git/ignore.
+	# EDITOR (set in zsh) is used for commit messages; not overridden here.
+	pager = delta
+
+[interactive]
+	# Syntax-highlight hunks in `git add -p` etc.
+	diffFilter = delta --color-only
+
+[delta]
+	navigate = true        # n / N to jump between files in the pager
+	line-numbers = true
+	hyperlinks = true      # OSC-8 links: click a line to open it in $EDITOR
+	# No syntax-theme set on purpose — delta falls back to $BAT_THEME,
+	# which .zshrc switches with macOS light/dark (Catppuccin Mocha / gruvbox-light).
+
+[column]
+	ui = auto
+
+[branch]
+	# `git branch` lists most-recently-committed first.
+	sort = -committerdate
+
+[tag]
+	# Sort tags by semantic version, not lexically (v1.10 after v1.9).
+	sort = version:refname
+
+[diff]
+	algorithm = histogram
+	colorMoved = default
+	mnemonicPrefix = true
+	renames = copies
+
+[push]
+	default = simple
+	autoSetupRemote = true
+	followTags = true
+
+[pull]
+	rebase = true
+
+[fetch]
+	prune = true
+	pruneTags = true
+	all = true
+
+[rebase]
+	autoStash = true
+	autoSquash = true
+	updateRefs = true
+
+[merge]
+	# zdiff3 shows the common ancestor in conflicts — much easier to resolve.
+	conflictStyle = zdiff3
+
+[commit]
+	# Show the full diff in the commit-message editor.
+	verbose = true
+
+[rerere]
+	# Remember and replay conflict resolutions.
+	enabled = true
+	autoUpdate = true
+
+[help]
+	# Prompt before running an auto-corrected mistyped command.
+	autocorrect = prompt
+
+[log]
+	date = iso
+
+[transfer]
+	# Reject malformed objects on fetch/receive (integrity guard).
+	fsckObjects = true
+[fetch]
+	fsckObjects = true
+[receive]
+	fsckObjects = true
+
+# --- SSH commit signing via 1Password (opt-in per commit) --------------------
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+	allowedSignersFile = ~/.config/git/allowed_signers
+
+# --- Credentials: gh handles github.com, osxkeychain for everything else -----
+[credential "https://github.com"]
+	helper =
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !/opt/homebrew/bin/gh auth git-credential
+
+# --- Aliases -----------------------------------------------------------------
+[alias]
+	s = status --short --branch
+	last = log -1 HEAD --stat
+	unstage = restore --staged
+	amend = commit --amend --no-edit
+	# Pretty one-line graph.
+	lg = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) %C(dim white)%an%C(reset) %C(green)(%ar)%C(reset)%C(auto)%d%C(reset) %s'
+	# Files changed in the last commit / working tree.
+	root = rev-parse --show-toplevel

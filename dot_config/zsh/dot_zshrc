@@ -48,9 +48,11 @@ export HOMEBREW_NO_AUTO_UPDATE=1       # skip automatic brew update before insta
 if [[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" == Dark ]]; then
   export LS_COLORS="$(vivid generate catppuccin-mocha)"    # dark
   export COLORFGBG="15;0"                                  # light fg on dark bg
+  export BAT_THEME="Catppuccin Mocha"                      # drives bat + git-delta
 else
   export LS_COLORS="$(vivid generate gruvbox-light-hard)"  # light (high contrast)
   export COLORFGBG="0;15"                                  # dark fg on light bg
+  export BAT_THEME="gruvbox-light"                         # drives bat + git-delta
 fi
 
 # =========================================================

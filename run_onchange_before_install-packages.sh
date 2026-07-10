@@ -23,6 +23,7 @@ brew "fzf"
 brew "fd"
 brew "eza"
 brew "bat"
+brew "git-delta"          # syntax-highlighting pager for git diffs (theme via $BAT_THEME)
 brew "vivid"
 brew "jq"
 brew "chezmoi"

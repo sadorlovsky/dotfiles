@@ -1,0 +1,25 @@
+# ~/.config/git/ignore  (chezmoi source: dot_config/git/ignore)
+# Global gitignore — applies to every repo. Git auto-loads this XDG path.
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Editors / IDEs
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.code-workspace
+
+# Direnv / env
+.direnv/
+.envrc.local
+
+# Logs & misc
+*.log
