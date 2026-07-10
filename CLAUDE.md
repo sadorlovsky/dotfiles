@@ -4,13 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Personal macOS dotfiles managed with [chezmoi](https://www.chezmoi.io/). Files here are chezmoi **source state**, not the live dotfiles — chezmoi's naming conventions map them to targets in `$HOME`:
+Personal macOS dotfiles managed with [chezmoi](https://www.chezmoi.io/). Files here are chezmoi **source state**, not the live dotfiles — chezmoi's naming conventions map them to targets in `$HOME`.
 
-- `dot_config/zsh/dot_zshrc` → `~/.config/zsh/.zshrc`
-- `private_secrets.zsh.tmpl` → `~/.config/zsh/secrets.zsh` (mode 600, rendered as a template)
-- `run_onchange_before_install-packages.sh` → script that re-runs on `chezmoi apply` whenever its contents change
+**Source root is `home/`** (set by the `.chezmoiroot` file at the repo root), so all source paths below are under `home/`. The repo root holds only meta files (`README.md`, `ROADMAP.md`, `CLAUDE.md`) — they sit outside the source root, so chezmoi ignores them automatically (no `.chezmoiignore` entry needed).
 
-Note: the live chezmoi source directory is `~/.local/share/chezmoi`, which is a separate checkout of this same repo. Edits in this working copy do not reach `$HOME` until pushed and pulled via `chezmoi update`, or applied explicitly with `chezmoi apply --source <this dir>`.
+- `home/dot_config/zsh/dot_zshrc` → `~/.config/zsh/.zshrc`
+- `home/private_secrets.zsh.tmpl` → `~/.config/zsh/secrets.zsh` (mode 600, rendered as a template)
+- `home/run_onchange_before_install-packages.sh` → script that re-runs on `chezmoi apply` whenever its contents change
+- `home/.chezmoiremove` → declaratively deletes retired target paths on apply (see its header)
+
+Note: the live chezmoi source directory is `~/.local/share/chezmoi` (with `chezmoi source-path` resolving to its `home/` subdir), a separate checkout of this same repo. Edits in this working copy do not reach `$HOME` until pushed and pulled via `chezmoi update`, or applied explicitly with `chezmoi apply --source <this dir>`.
 
 ## Common commands
 

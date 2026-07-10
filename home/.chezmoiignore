@@ -1,6 +1,5 @@
-README.md
-ROADMAP.md
-CLAUDE.md
+# README.md / ROADMAP.md / CLAUDE.md now live at the repo root, outside the
+# source root (home/, set via .chezmoiroot) — chezmoi ignores them automatically.
 .config/wezterm/.current-theme
 
 {{/* Skip secrets when the 1Password desktop app isn't running, so

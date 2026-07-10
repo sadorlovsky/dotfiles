@@ -1,0 +1,6 @@
+# .chezmoiremove — target paths (in $HOME) that chezmoi should DELETE on apply.
+# Use this to retire a dotfile across all machines: add its target path here,
+# and on the next `chezmoi apply` it's removed everywhere (then you can drop the
+# line). Supports templates. One target path per line, e.g.:
+#   .config/zsh/rc.d/99-old-topic.zsh
+#   .config/some-retired-tool
