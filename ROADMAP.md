@@ -72,3 +72,17 @@ Decisions to make when doing it: search style (`compact`/`full`), default `filte
 ## atuin: cross-machine sync (optional)
 
 Only worth it with a second machine. `atuin register`/`login` (hosted or self-hosted). The encryption key (`atuin key`) is a **secret**: store in 1Password and render via a chezmoi template like `private_secrets.zsh.tmpl`. Never commit it in plaintext.
+
+## WezTerm: fuzzy SSH host picker keybinding
+
+The `ssh_domains` (auto-generated in `modules/ssh.lua` from `~/.ssh/config`) currently have **no launcher keybinding** — you reach them via `wezterm connect <host>` or the Command Palette (`Ctrl+Shift+P`). Add a key that opens a fuzzy picker of just the SSH domains.
+
+**Steps.** In `dot_config/wezterm/modules/keys.lua`, bind a key to:
+```lua
+wezterm.action.ShowLauncherArgs({ flags = "FUZZY|DOMAINS" })
+```
+**Pick a free key** — `Ctrl+Shift+L` is already `ShowDebugOverlay` (WezTerm default), so don't use it. Candidates: `CMD+Shift+S`, `Ctrl+Shift+U`, or a leader-key chord if you use one.
+
+**Notes.**
+- Connecting logs a harmless warning: `WEZTERM_REMOTE_PANE setenv failed … AcceptEnv`. To silence it (optional, only on servers you own like `mastodon`): add `AcceptEnv WEZTERM_*` to the remote `/etc/ssh/sshd_config` and reload sshd.
+- Current domains use `multiplexing = "None"` (no remote install needed, but no persistence). If you ever want tmux-like persistent remote sessions, switch a domain to `multiplexing = "WezTerm"` and install `wezterm` on that host.
