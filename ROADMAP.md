@@ -160,3 +160,15 @@ Then `{{ if .work }}…{{ end }}` in `.chezmoiignore.tmpl` / templates gates wor
 1. WezTerm (`modules/keys.lua`): map Shift+Arrow / Shift+Opt+Arrow / Shift+Cmd+Arrow to emit the CSI sequences the ZLE widgets expect.
 2. New `rc.d/NN-selection.zsh`: the ZLE widgets (set mark, region-killing `self-insert`, arrow-deactivation wrapper) + `zle_highlight=(paste:none)`.
 3. Verify: select, replace-on-type, and clear-on-plain-arrow all behave in WezTerm.
+
+## Helix: follow macOS light/dark appearance
+
+**What.** Make Helix's theme track macOS appearance (catppuccin_mocha ⇄ gruvbox_light_hard) like zsh (`LS_COLORS`/`BAT_THEME`) and WezTerm already do. Currently `config.toml` hardcodes `catppuccin_mocha`.
+
+**Why deferred.** Helix has **no native runtime light/dark switch** and `config.toml` has no include/env-theme mechanism, so there's no clean one-file solution.
+
+**Options.**
+- `hx` zsh wrapper that picks a config via `hx -c`: keep the shared config in one file and a 1-line `theme` override per mode — but `-c` replaces the whole config, so it needs a small include-less duplication or a generated temp config at launch.
+- Or a `precmd`/appearance hook that rewrites only the `theme = …` line — but `config.toml` is chezmoi-managed, so rewriting it causes drift. Would need the theme in a separate non-managed file (which Helix can't include).
+
+Neither is clean; revisit if the hardcoded theme becomes annoying. Simplest stopgap: flip the one line when you switch appearance for a while.
