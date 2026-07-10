@@ -19,8 +19,10 @@ export FZF_DEFAULT_OPTS='
   --pointer="▶"
   --marker="+"
 '
-# Preview file contents with bat on Ctrl-T
-export FZF_CTRL_T_OPTS="--preview 'bat --color=always --style=plain,numbers --line-range=:500 {}'"
+# Rich preview via the shared dispatcher (defined in .zshenv) on Ctrl-T (files)
+# and Alt-C (dirs): dir -> eza, text -> bat, image -> chafa, other binary -> hexyl.
+export FZF_CTRL_T_OPTS="--preview '_fzf_preview {}'"
+export FZF_ALT_C_OPTS="--preview '_fzf_preview {}'"
 # Key bindings (Ctrl-T, Ctrl-R, Alt-C) + completion
 # NOTE: Ctrl-R here is later overridden by atuin (55-atuin.zsh).
 source <(fzf --zsh)

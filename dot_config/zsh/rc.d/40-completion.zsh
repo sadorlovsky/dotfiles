@@ -19,16 +19,19 @@ zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}   # colorize completion en
 # Must be loaded AFTER compinit, BEFORE plugins that wrap widgets (autosuggestions, syntax-highlighting)
 source "$XDG_DATA_HOME/zsh/plugins/fzf-tab/fzf-tab.plugin.zsh"
 zstyle ':fzf-tab:*' switch-group '<' '>'   # switch groups with < / >
-# Smart preview: directory -> eza, file -> bat, anything else -> plain text
-zstyle ':fzf-tab:complete:*' fzf-preview '
-  if [[ -d $realpath ]]; then
-    eza -1 --color=always $realpath
-  elif [[ -f $realpath ]]; then
-    bat --color=always --style=plain,numbers --line-range=:500 $realpath
-  else
-    echo $realpath
-  fi
-'
+# Smart preview via the shared dispatcher (defined in .zshenv) — same rich
+# preview as CTRL-T / ALT-C: dir -> eza, text -> bat, image -> chafa, bin -> hexyl.
+zstyle ':fzf-tab:complete:*' fzf-preview '_fzf_preview $realpath'
+
+# Per-command context previews (candidate is $word for non-path completions).
+zstyle ':fzf-tab:complete:man:*' fzf-preview \
+  'man $word 2>/dev/null | col -bx | bat -l man --color=always -p 2>/dev/null || man $word'
+zstyle ':fzf-tab:complete:(brew|brew-install|brew-uninstall|brew-info):*' fzf-preview \
+  'brew info $word 2>/dev/null'
+zstyle ':fzf-tab:complete:(kill|killall):*' fzf-preview \
+  'ps -Ao pid,pcpu,pmem,comm | grep -i -- $word 2>/dev/null'
+zstyle ':fzf-tab:complete:git-(checkout|switch|log|show|rebase|merge|branch):*' fzf-preview \
+  'git log --oneline --graph --color=always -20 $word 2>/dev/null'
 # Auto-hide the preview pane for non-path candidates (flags, subcommands, etc.),
 # so their descriptions get the full width instead of being squeezed + truncated.
 # fzf-tab packs each candidate as NUL-delimited fields; field 2 ({2}) is the

@@ -9,3 +9,33 @@ export XDG_STATE_HOME="$HOME/.local/state"
 # Used by git, crontab -e, less -v, etc.
 export EDITOR="hx"
 export VISUAL="hx"
+
+# ---------- fzf / fzf-tab shared preview ----------
+# One dispatcher for CTRL-T, ALT-C and every fzf-tab completion. Defined here in
+# .zshenv (not .zshrc) so it also exists in the non-interactive zsh that fzf
+# spawns to render previews. Routes by type: dir -> eza, text -> bat,
+# image -> chafa, other binary -> hexyl (chafa/hexyl optional; fall back to file).
+_fzf_preview() {
+  emulate -L zsh
+  local target=$1
+  [[ -z $target ]] && return
+  if [[ -d $target ]]; then
+    eza -1 --color=always --icons --group-directories-first -- "$target" 2>/dev/null \
+      || ls -1A -- "$target"
+    return
+  fi
+  [[ -f $target ]] || { print -r -- "$target"; return }
+  local mime=$(file --brief --mime-type -- "$target" 2>/dev/null)
+  case $mime in
+    image/*)
+      (( $+commands[chafa] )) \
+        && chafa --size="${FZF_PREVIEW_COLUMNS:-80}x${FZF_PREVIEW_LINES:-25}" -- "$target" \
+        || file --brief -- "$target" ;;
+    text/*|application/json|application/*xml|application/javascript|application/x-shellscript|inode/x-empty)
+      bat --color=always --style=plain,numbers --line-range=:500 -- "$target" ;;
+    *)
+      (( $+commands[hexyl] )) \
+        && hexyl --length=2KiB -- "$target" \
+        || file --brief -- "$target" ;;
+  esac
+}

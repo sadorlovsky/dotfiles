@@ -24,6 +24,8 @@ brew "fzf"
 brew "fd"
 brew "eza"
 brew "bat"
+brew "chafa"             # terminal image previews (fzf CTRL-T on images)
+brew "hexyl"             # hex preview of binaries (fzf CTRL-T on non-text)
 brew "git-delta"          # syntax-highlighting pager for git diffs (theme via $BAT_THEME)
 brew "vivid"
 brew "jq"
