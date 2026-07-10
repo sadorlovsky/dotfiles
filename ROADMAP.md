@@ -127,3 +127,36 @@ wezterm.action.ShowLauncherArgs({ flags = "FUZZY|DOMAINS" })
 3. OS-aware Brewfile: the `run_onchange` installer already uses a heredoc — template it so Linux installs a **subset** (no casks/fonts) or skips brew entirely (Option A).
 4. Make plugin sourcing path-agnostic per the chosen option.
 5. Test: `chezmoi init` on one Linux host, confirm only portable topics land and the shell starts clean.
+
+## chezmoi: machine-class data model (when a work / divergent machine appears)
+
+**What.** Boolean feature tags (`work` / `personal` / `headless`) computed in `.chezmoi.toml.tmpl` from hostname / auto-detection, exposed in `[data]`, then used to gate topics and secrets via `.chezmoiignore.tmpl`. Idea from twpayne (chezmoi's author).
+
+**Why deferred.** Currently redundant: the 3 MacBooks are identical (no work/personal split), and headless machines are already caught by `.chezmoi.os == "linux"` (see the cross-platform task). Worth doing only when a **work Mac** appears (different git email/signing, different Brewfile) or the Macs diverge — complements the git `includeIf` task.
+
+**Reference** (twpayne/dotfiles):
+- data tags: <https://github.com/twpayne/dotfiles/blob/master/home/.chezmoi.toml.tmpl>
+- topic gating: <https://github.com/twpayne/dotfiles/blob/master/home/.chezmoiignore.tmpl>
+
+**Sketch.**
+```toml
+# home/.chezmoi.toml.tmpl
+{{- $work := false -}}
+{{- if eq .chezmoi.hostname "work-mbp" }}{{ $work = true }}{{ end -}}
+[data]
+  work = {{ $work }}
+```
+Then `{{ if .work }}…{{ end }}` in `.chezmoiignore.tmpl` / templates gates work-only or personal-only topics.
+
+## zsh: macOS-style Shift-selection in the command line (ZLE)
+
+**What.** Editor-grade text selection at the zsh prompt: Shift+Arrow / Shift+Opt+Arrow / Shift+Cmd+Arrow select text (via `set-mark-command`); typing replaces the selection (a custom `self-insert` kills the region); plain arrows clear it; `zle_highlight=(paste:none)`. Idea from sapegin/dotfiles. (ZLE = Zsh Line Editor — zsh's programmable command-line editor.)
+
+**Why deferred.** Genuinely novel but non-trivial ZLE work with **two moving parts**: it needs the terminal to emit the right key sequences *and* the ZLE widgets. sapegin relies on Ghostty's CSI codes — on WezTerm you'd first bind Shift+Arrow etc. to send `CSI 1;2D` (or CSI-u), then port the widgets.
+
+**Reference** (sapegin/dotfiles): <https://github.com/sapegin/dotfiles/blob/master/zsh/keybindings.zsh>
+
+**Steps.**
+1. WezTerm (`modules/keys.lua`): map Shift+Arrow / Shift+Opt+Arrow / Shift+Cmd+Arrow to emit the CSI sequences the ZLE widgets expect.
+2. New `rc.d/NN-selection.zsh`: the ZLE widgets (set mark, region-killing `self-insert`, arrow-deactivation wrapper) + `zle_highlight=(paste:none)`.
+3. Verify: select, replace-on-type, and clear-on-plain-arrow all behave in WezTerm.
