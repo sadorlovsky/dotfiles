@@ -127,13 +127,3 @@ wezterm.action.ShowLauncherArgs({ flags = "FUZZY|DOMAINS" })
 3. OS-aware Brewfile: the `run_onchange` installer already uses a heredoc — template it so Linux installs a **subset** (no casks/fonts) or skips brew entirely (Option A).
 4. Make plugin sourcing path-agnostic per the chosen option.
 5. Test: `chezmoi init` on one Linux host, confirm only portable topics land and the shell starts clean.
-
-## Prose linters for the blog (`proofread`)
-
-**What.** Three tiny grep/perl scripts (from nicksp/dotfiles) to catch weak writing before publishing: `lint-weasel-words` (very/really/clearly/значительно…), `lint-passive-voice`, `lint-dups` (adjacent duplicate words). Zero dependencies.
-
-**Why.** You write orlovsky.dev in EN + RU; these are cheap quality gates, and could be wired into the `blog-post` skill to run pre-publish.
-
-**Key decision — bilingual.** The reference scripts are English-only (word lists + English "be + participle" passive regex). For RU posts you'd need: a Russian weasel-word list, a separate RU passive detector (reflexive `-ся` / short participles — English regex won't work); `lint-dups` is language-agnostic. Decision when building: EN-only first vs bilingual EN+RU from the start.
-
-**Steps.** Add the scripts under a `bin/` dir (chezmoi-managed, on PATH), plus a `proofread` wrapper that runs all three on a file. Optionally reference from the blog-post skill.
