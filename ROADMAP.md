@@ -105,3 +105,35 @@ wezterm.action.ShowLauncherArgs({ flags = "FUZZY|DOMAINS" })
 3. Create per-project profiles under `dot_config/nono/profiles/*.json`, chezmoi-managed (XDG → `~/.config/nono/profiles/`). Start restrictive (project dir + needed network), loosen as needed.
 
 **Caveats.** nono is young — evaluate maturity before trusting it as a security boundary; `sandbox-exec` itself is deprecated-but-functional on macOS. Treat it as defense-in-depth, not a hard guarantee.
+
+## Cross-platform: zsh on Linux SSH hosts (OS-gated chezmoi)
+
+**Goal.** Run chezmoi on Linux SSH hosts and deploy the **full** zsh experience there (plugins included), while the 3 personal MacBooks keep the macOS-only bits. All three Macs share one config, so the split is purely **`.chezmoi.os` (darwin vs linux)** — no per-machine tags needed.
+
+**Substrate.** The `rc.d/NN-*.zsh` topic split is already ideal: gate whole topics per OS via `.chezmoiignore.tmpl`.
+
+**Topic portability:**
+- Portable as-is: `00-history`, `10-options`, `15-privacy`, `60-keybindings`, `85-functions` (jqi).
+- macOS-only (drop on Linux): `30-appearance` (`defaults read AppleInterfaceStyle`), `80-wezterm` (app path), and the whole `dot_config/wezterm/`.
+- Needs an OS-aware variant: `20-homebrew`, `40-completion`, `50-tools`, `55-atuin`, `90-aliases` — they assume Homebrew paths / macOS.
+
+**Key open decision — how plugins/tools install on Linux** (pick before building):
+- **Option A (server-friendly, recommended):** clone zsh plugins (fzf-tab already; add autosuggestions/syntax-highlighting/history-substring-search) via `.chezmoiexternal.toml` into `$XDG_DATA_HOME/zsh/plugins/` on **all** OSes, and refactor `50-tools`/`40-completion` to source from that XDG dir instead of `$BREW_PREFIX/share`. Install the binaries (atuin/starship/fzf/zoxide/eza/bat/fd) via **mise** or official installers on Linux. No linuxbrew on servers.
+- **Option B:** install linuxbrew on the servers and reuse `$(brew --prefix)/share/...` paths (minimal code change, heavy server dependency).
+
+**Steps (after deciding A/B):**
+1. `.chezmoi.toml.tmpl`: expose `os` in `[data]` (or just use `.chezmoi.os` directly in templates).
+2. `.chezmoiignore.tmpl`: `{{ if ne .chezmoi.os "darwin" }}` block dropping the macOS-only topics + `dot_config/wezterm`.
+3. OS-aware Brewfile: the `run_onchange` installer already uses a heredoc — template it so Linux installs a **subset** (no casks/fonts) or skips brew entirely (Option A).
+4. Make plugin sourcing path-agnostic per the chosen option.
+5. Test: `chezmoi init` on one Linux host, confirm only portable topics land and the shell starts clean.
+
+## Prose linters for the blog (`proofread`)
+
+**What.** Three tiny grep/perl scripts (from nicksp/dotfiles) to catch weak writing before publishing: `lint-weasel-words` (very/really/clearly/значительно…), `lint-passive-voice`, `lint-dups` (adjacent duplicate words). Zero dependencies.
+
+**Why.** You write orlovsky.dev in EN + RU; these are cheap quality gates, and could be wired into the `blog-post` skill to run pre-publish.
+
+**Key decision — bilingual.** The reference scripts are English-only (word lists + English "be + participle" passive regex). For RU posts you'd need: a Russian weasel-word list, a separate RU passive detector (reflexive `-ся` / short participles — English regex won't work); `lint-dups` is language-agnostic. Decision when building: EN-only first vs bilingual EN+RU from the start.
+
+**Steps.** Add the scripts under a `bin/` dir (chezmoi-managed, on PATH), plus a `proofread` wrapper that runs all three on a file. Optionally reference from the blog-post skill.
