@@ -29,6 +29,7 @@ brew "hexyl"             # hex preview of binaries (fzf CTRL-T on non-text)
 brew "git-delta"          # syntax-highlighting pager for git diffs (theme via $BAT_THEME)
 brew "vivid"
 brew "jq"
+brew "helix"              # $EDITOR (hx)
 brew "chezmoi"
 brew "age"                # decrypts encrypted_ source files (e.g. ~/.ssh/config)
 brew "mise"

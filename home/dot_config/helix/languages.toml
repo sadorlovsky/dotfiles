@@ -1,0 +1,30 @@
+# ~/.config/helix/languages.toml
+# Per-language overrides. Most LSPs aren't installed yet — add them via brew/mise
+# and Helix auto-detects (check with `hx --health <lang>`). Examples to enable
+# later: `brew install rust-analyzer gopls`, `npm i -g typescript-language-server`.
+
+# --- Prose: wrap and don't clutter with rulers -------------------------------
+[[language]]
+name = "markdown"
+soft-wrap.enable = true
+text-width = 80
+rulers = []
+
+[[language]]
+name = "git-commit"
+soft-wrap.enable = true
+text-width = 72                   # conventional git commit body width
+rulers = [50, 72]                 # subject / body guides
+
+# --- Config files: 2-space indent --------------------------------------------
+[[language]]
+name = "toml"
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "json"
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "yaml"
+indent = { tab-width = 2, unit = "  " }
