@@ -11,6 +11,7 @@ require("modules.general").apply(config)
 require("modules.links").apply(config)
 require("modules.mouse").apply(config)
 require("modules.keys").apply(config)
+require("modules.ssh").apply(config) -- ssh_domains generated from ~/.ssh/config
 require("modules.theme").apply(config) -- computes the active theme; wires tabbar
 
 -- ============================================================================
