@@ -86,3 +86,22 @@ wezterm.action.ShowLauncherArgs({ flags = "FUZZY|DOMAINS" })
 **Notes.**
 - Connecting logs a harmless warning: `WEZTERM_REMOTE_PANE setenv failed … AcceptEnv`. To silence it (optional, only on servers you own like `mastodon`): add `AcceptEnv WEZTERM_*` to the remote `/etc/ssh/sshd_config` and reload sshd.
 - Current domains use `multiplexing = "None"` (no remote install needed, but no persistence). If you ever want tmux-like persistent remote sessions, switch a domain to `multiplexing = "WezTerm"` and install `wezterm` on that host.
+
+## Sandboxed "YOLO" Claude Code (`sb`)
+
+**What.** A shell wrapper that runs `claude --dangerously-skip-permissions` inside a sandbox jail with per-project allow-profiles, so you get the fast no-confirmation flow without giving the agent unrestricted access to the machine. Idea + reference implementation from statico/dotfiles.
+
+**Why.** You run Claude Code a lot; `--dangerously-skip-permissions` is fast but scary. A sandbox constrains what the agent can touch (filesystem, network) per project.
+
+**Tool.** [nono.sh](https://nono.sh) — a macOS sandbox runner (uses Apple's `sandbox-exec` under the hood) with JSON allow-profiles.
+
+**Reference implementation** (statico/dotfiles):
+- `sb()` wrapper: <https://github.com/statico/dotfiles/blob/main/.zshrc#L470-L484> — runs `nono run --profile <name> --suppress-save-prompt / -- env DISABLE_AUTOUPDATER=1 claude --dangerously-skip-permissions "$@"`.
+- `_sb` completion: <https://github.com/statico/dotfiles/blob/main/.zshrc#L794> — completes the profile arg from `~/.config/nono/profiles/*.json`.
+
+**Steps.**
+1. Install nono (check current install method on nono.sh — Homebrew tap or script).
+2. Add `sb()` + `_sb` completion as a new `dot_config/zsh/rc.d/NN-agents.zsh` (topic file).
+3. Create per-project profiles under `dot_config/nono/profiles/*.json`, chezmoi-managed (XDG → `~/.config/nono/profiles/`). Start restrictive (project dir + needed network), loosen as needed.
+
+**Caveats.** nono is young — evaluate maturity before trusting it as a security boundary; `sandbox-exec` itself is deprecated-but-functional on macOS. Treat it as defense-in-depth, not a hard guarantee.
