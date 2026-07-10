@@ -76,10 +76,17 @@ There is no build/lint/test suite. After editing, run `chezmoi diff` (or `chezmo
 
 **The repo is a PUBLIC GitHub repo, so anything reconnaissance-sensitive is age-encrypted, not committed in the clear.** `~/.ssh/config` (internal hostnames, IPs, users) lives in source as `private_dot_ssh/encrypted_private_config.age`. Encryption config is in `.chezmoi.toml.tmpl` (`encryption = "age"` + a public `recipient` — safe to commit). The **private** age identity lives only at `~/.config/chezmoi/key.txt` and in 1Password (document `chezmoi-age-key`, Private vault); it is never committed. To edit the ssh config, use `chezmoi edit ~/.ssh/config` (chezmoi decrypts, you edit plaintext, it re-encrypts). To manage another sensitive file the same way: `chezmoi add --encrypt <path>`.
 
-**New-machine bootstrap** (the age key must exist before `chezmoi apply` can decrypt):
+**New-machine bootstrap.** The one-liner in `README.md` runs `install.sh` (repo
+root, outside the source root), which sequences Xcode CLT → Homebrew → chezmoi +
+age + 1Password (CLI + app) → `op` sign-in → `chezmoi init --apply sadorlovsky`.
+
+The age key no longer needs to be provisioned by hand: **`run_before_00-fetch-age-key.sh.tmpl`**
+fetches it from 1Password (`chezmoi-age-key`, Private vault) on the first apply,
+before any `encrypted_` file is decrypted — chezmoi guarantees `run_before_`
+scripts run first. It no-ops once `~/.config/chezmoi/key.txt` exists (every
+subsequent `apply`/`update`), and exits with actionable guidance if the key is
+missing and `op` is unavailable/signed-out. Manual fallback if ever needed:
 ```sh
-brew install chezmoi age 1password-cli && op signin
 op document get chezmoi-age-key --vault Private > ~/.config/chezmoi/key.txt
 chmod 600 ~/.config/chezmoi/key.txt
-chezmoi init --apply sadorlovsky
 ```

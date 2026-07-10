@@ -6,6 +6,10 @@
 
 set -euo pipefail
 
+# macOS-only: `defaults` doesn't exist elsewhere. Exit cleanly on other OSes so a
+# cross-platform apply isn't aborted by this script.
+[ "$(uname -s)" = "Darwin" ] || exit 0
+
 # Close System Settings so it doesn't overwrite the changes below.
 osascript -e 'tell application "System Settings" to quit' 2>/dev/null || true
 

@@ -46,28 +46,52 @@ Colors follow the macOS light/dark system appearance automatically:
 
 ## 🔧 Setup on a new machine
 
-1. Install [Homebrew](https://brew.sh) and chezmoi:
-   ```sh
-   brew install chezmoi
-   ```
+One command, from a clean macOS install:
 
-2. Pull and apply the dotfiles:
-   ```sh
-   chezmoi init --apply sadorlovsky
-   ```
-   This also **installs all Homebrew packages** (via a `run_onchange` script that
-   runs `brew bundle`) and **clones `fzf-tab`** (via `.chezmoiexternal.toml`) —
-   no manual `brew install` needed. `~/.zshenv` (managed here) points `ZDOTDIR`
-   at `~/.config/zsh`, so zsh finds its config with no system-level setup.
+```sh
+sh -c "$(curl -fsLS https://raw.githubusercontent.com/sadorlovsky/dotfiles/main/install.sh)"
+```
 
-3. Fonts used by WezTerm (install manually — not on Homebrew):
-   **Fairfax Hax** and **JetBrains Mono**.
+[`install.sh`](install.sh) is idempotent and takes the machine end to end:
+
+1. **Xcode Command Line Tools** → **Homebrew** (installs each only if missing).
+2. **chezmoi + age + 1Password CLI/app** — the tools needed before the first apply.
+3. Pauses until you **sign in to 1Password** (enable *Settings → Developer →
+   Integrate with 1Password CLI*, then unlock). This is the one unavoidable
+   manual step — it backs both the age key and `secrets.zsh`.
+4. **`chezmoi init --apply sadorlovsky`**, which then:
+   - fetches the **age key** from 1Password (`chezmoi-age-key`, Private vault) via
+     a `run_before` script — needed to decrypt `~/.ssh/config`;
+   - **installs every Homebrew package + font** (`run_onchange` → `brew bundle`);
+   - **clones `fzf-tab`** (`.chezmoiexternal.toml`);
+   - points `ZDOTDIR` at `~/.config/zsh` via the managed `~/.zshenv`.
+
+Re-running the one-liner (or `chezmoi apply`) is safe — every step skips work
+already done.
+
+### Prefer to do it by hand?
+
+```sh
+brew install chezmoi age 1password-cli   # + install the 1Password app and sign in
+chezmoi init --apply sadorlovsky         # age key is fetched from 1Password automatically
+```
+
+If the age key can't be fetched (no 1Password), place it manually first:
+```sh
+op document get chezmoi-age-key --vault Private > ~/.config/chezmoi/key.txt
+chmod 600 ~/.config/chezmoi/key.txt
+```
 
 ### Automation
 
+- **`install.sh`** — the bootstrap above (repo root, outside chezmoi's source).
+- **`run_before_00-fetch-age-key.sh.tmpl`** — provisions the age key from
+  1Password before any encrypted file is read (no-ops once the key exists).
 - **`run_onchange_before_install-packages.sh`** — runs `brew bundle` with the
   package list; re-runs automatically whenever that list changes.
 - **`.chezmoiexternal.toml`** — clones/updates `fzf-tab` (refreshed weekly).
+
+Fonts (**Fairfax** + **JetBrains Mono**) install automatically via `brew bundle`.
 
 ## 🔄 Updates
 

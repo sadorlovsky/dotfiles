@@ -16,8 +16,11 @@ zstyle ':completion:*' menu no                          # let fzf-tab handle the
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}   # colorize completion entries
 
 # fzf-tab: replace the completion menu with an fzf fuzzy picker
-# Must be loaded AFTER compinit, BEFORE plugins that wrap widgets (autosuggestions, syntax-highlighting)
-source "$XDG_DATA_HOME/zsh/plugins/fzf-tab/fzf-tab.plugin.zsh"
+# Must be loaded AFTER compinit, BEFORE plugins that wrap widgets (autosuggestions, syntax-highlighting).
+# Guarded: if the external clone hasn't landed yet (mid-bootstrap), skip it — the
+# zstyles below are harmless no-ops without the plugin.
+[[ -r "$XDG_DATA_HOME/zsh/plugins/fzf-tab/fzf-tab.plugin.zsh" ]] && \
+  source "$XDG_DATA_HOME/zsh/plugins/fzf-tab/fzf-tab.plugin.zsh"
 zstyle ':fzf-tab:*' switch-group '<' '>'   # switch groups with < / >
 # Smart preview via the shared dispatcher (defined in .zshenv) — same rich
 # preview as CTRL-T / ALT-C: dir -> eza, text -> bat, image -> chafa, bin -> hexyl.

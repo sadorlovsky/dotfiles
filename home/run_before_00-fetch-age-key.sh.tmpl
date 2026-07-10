@@ -1,0 +1,48 @@
+#!/bin/sh
+# Provision the age identity that decrypts encrypted_ source files (e.g. the
+# private ~/.ssh/config). chezmoi runs run_before_ scripts before it reads any
+# encrypted file, so this guarantees the key is in place in time to decrypt.
+#
+# Idempotent: no-ops the instant the key already exists — which is the common
+# case on every `chezmoi apply` / `chezmoi update` after the first init. It only
+# reaches out to 1Password on a fresh machine where the key is still missing.
+set -eu
+
+KEY="{{ .chezmoi.homeDir }}/.config/chezmoi/key.txt"
+
+# Already provisioned → done. Keep this first so the hot path never touches op.
+[ -f "$KEY" ] && exit 0
+
+# Key missing: it can only come from 1Password. Fail loudly with actionable
+# guidance instead of letting chezmoi abort later with a cryptic decrypt error.
+if ! command -v op >/dev/null 2>&1; then
+    echo "error: age key missing and 1Password CLI (op) not found." >&2
+    echo "       Install it (brew install 1password-cli) and sign in, or drop the" >&2
+    echo "       key in manually:  op document get chezmoi-age-key --vault Private > $KEY" >&2
+    exit 1
+fi
+if ! op whoami >/dev/null 2>&1; then
+    echo "error: age key missing and 1Password CLI is not signed in." >&2
+    echo "       Enable the app's CLI integration (Settings → Developer), or run:" >&2
+    echo "         eval \"\$(op signin)\"" >&2
+    echo "       then run 'chezmoi apply' again." >&2
+    exit 1
+fi
+
+echo "==> Fetching age identity from 1Password (chezmoi-age-key, Private vault)…" >&2
+mkdir -p "$(dirname "$KEY")"
+umask 077
+if ! op document get chezmoi-age-key --vault Private > "$KEY.tmp" 2>/dev/null; then
+    rm -f "$KEY.tmp"
+    echo "error: could not read 'chezmoi-age-key' from 1Password (Private vault)." >&2
+    exit 1
+fi
+# Guard against writing a bogus key (empty output, wrong document, etc.).
+if ! grep -q 'AGE-SECRET-KEY-' "$KEY.tmp"; then
+    rm -f "$KEY.tmp"
+    echo "error: fetched document is not a valid age identity." >&2
+    exit 1
+fi
+mv "$KEY.tmp" "$KEY"
+chmod 600 "$KEY"
+echo "==> age identity installed at $KEY" >&2

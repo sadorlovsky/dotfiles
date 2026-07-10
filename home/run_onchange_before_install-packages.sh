@@ -44,6 +44,12 @@ brew "matheusml/zsh-ai/zsh-ai"
 # Terminal
 cask "wezterm@nightly"
 
-# Fonts — Fairfax Hax (bundled in the Fairfax family) is the WezTerm UI font
+# Secrets — 1Password app + CLI back the age key and secrets.zsh templates
+cask "1password"
+cask "1password-cli"
+
+# Fonts — Fairfax Hax (bundled in the Fairfax family) is the WezTerm UI font;
+# JetBrains Mono is the WezTerm text font.
 cask "font-fairfax"
+cask "font-jetbrains-mono"
 BREWFILE
