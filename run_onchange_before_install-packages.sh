@@ -19,6 +19,7 @@ brew bundle --file=/dev/stdin <<'BREWFILE'
 # Shell tools
 brew "starship"
 brew "zoxide"
+brew "atuin"              # SQLite-backed shell history + fuzzy Ctrl-R search
 brew "fzf"
 brew "fd"
 brew "eza"

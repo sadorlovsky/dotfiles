@@ -4,85 +4,58 @@ Planned changes to these dotfiles. Each item is a self-contained task with conte
 
 ---
 
-## [atuin](https://github.com/atuinsh/atuin) integration
+## git: per-context identity via `includeIf`
 
-**What it is.** A replacement for the standard shell history: it writes commands to SQLite instead of `$HISTFILE`, offers fuzzy search over history with filters (directory, host, exit code, duration, time), optional E2E-encrypted sync across machines, and stats. Written in Rust, installed via Homebrew.
+**What.** Split git identity by directory so work repos automatically use a work email/signing key, personal repos the default. Inspired by holman/dotfiles' `[include] path = ~/.gitconfig.local` pattern, upgraded to conditional includes.
 
-**Why.** Cross-machine history sync and contextual search ("what did I run in this directory") — things that fzf + `zsh-history-substring-search` don't provide.
+**Why.** Avoid committing to a work repo with the personal `sadorlovsky@gmail.com`, and vice-versa. Only worth doing once a second (work) context exists.
 
-### Key risk: keybinding conflict
+**Steps.**
 
-In the current `dot_config/zsh/dot_zshrc`, history navigation is already handled by two mechanisms:
-
-- **`Ctrl+R`** — fzf (`source <(fzf --zsh)`, line ~110).
-- **`↑` / `↓`** — `zsh-history-substring-search` (lines ~134–138).
-
-By default `atuin init zsh` hijacks **both** `Ctrl+R` **and** `↑`. Adding it naively would cause a double hijack and break the widget chain.
-
-**Zone-splitting solution:**
-
-- `Ctrl+R` → **atuin** (full search with filters).
-- `↑` / `↓` → stay with **`zsh-history-substring-search`** (start atuin with `--disable-up-arrow`).
-- **Remove** the fzf `Ctrl+R` binding so it doesn't duplicate atuin.
-
-### Load order (load-bearing!)
-
-CLAUDE.md explicitly pins the plugin order, and `history-substring-search` must remain **last**. atuin registers its own ZLE widgets, so its init must go in the "Prompt & tools" block **before** autosuggestions / syntax-highlighting / history-substring-search — by analogy with zoxide/mise. After init, all that's left is rebinding `Ctrl+R` to atuin in the "Key bindings" block without touching the arrow-key bindings.
-
-### Steps
-
-1. **Package.** Add to `run_onchange_before_install-packages.sh` (heredoc Brewfile, "Shell tools" section):
+1. In `dot_config/git/config`, append after `[user]`:
+   ```ini
+   [includeIf "gitdir:~/work/"]
+       path = ~/.config/git/work.config
    ```
-   brew "atuin"
+2. Create `dot_config/git/work.config` with just the override:
+   ```ini
+   [user]
+       email = <work-email>
+       signingkey = <work-ssh-key>
    ```
-   Changing the script's contents itself triggers `brew bundle` on the next `chezmoi apply`.
+   If the work email is non-sensitive it can be committed; otherwise render it via a chezmoi template / 1Password like `private_secrets.zsh.tmpl`.
+3. Verify: `cd ~/work/somerepo && git config user.email` shows the work address; elsewhere the default.
 
-2. **Initialization in `dot_config/zsh/dot_zshrc`.** In the "Prompt & tools" block next to zoxide/mise, respecting the order (before autosuggestions):
-   ```sh
-   # atuin (SQLite-backed shell history + search)
-   # --disable-up-arrow: leave Up/Down to zsh-history-substring-search;
-   # Ctrl-R is rebound to atuin below (fzf's Ctrl-R binding is removed).
-   eval "$(atuin init zsh --disable-up-arrow)"
-   ```
+**Note.** `includeIf "gitdir:"` needs a trailing slash to match a directory tree. Order matters — later includes win, so keep the conditional block after the base `[user]`.
 
-3. **Remove the duplicate fzf `Ctrl+R`.** `source <(fzf --zsh)` registers Ctrl+R, Ctrl+T, and Alt+C. Keep Ctrl+T and Alt+C, hand Ctrl+R to atuin. Options:
-   - Keep `fzf --zsh` as is, and in the "Key bindings" block after atuin init explicitly rebind `Ctrl+R` to the atuin widget (the last `bindkey` wins), **or**
-   - Set `export ZSH_FZF_HISTORY_SEARCH_BIND=` / remove the fzf binding manually.
+---
 
-   The first option is preferred — an explicit `bindkey '^R' atuin-search` at the end.
+## Screenshots → iCloud Drive (instead of Desktop)
 
-4. **atuin config (optional, but recommended).** Add `dot_config/atuin/config.toml` as chezmoi source state:
-   ```toml
-   # ~/.config/atuin/config.toml
-   ## don't auto-sync history on startup (if sync isn't needed right away)
-   auto_sync = false
-   ## default search scope — current directory, then global
-   filter_mode = "global"
-   filter_mode_shell_up_key_binding = "directory"
-   style = "compact"
-   inline_height = 20
-   ## don't store commands with a leading space (like HIST_IGNORE_SPACE)
-   ```
-   The XDG path is already set up (`XDG_CONFIG_HOME`), so `dot_config/atuin/config.toml` → `~/.config/atuin/config.toml`.
+**What.** Point `com.apple.screencapture location` at an iCloud Drive folder so screenshots don't clutter the Desktop and sync across devices. Deferred from the macOS-defaults curation.
 
-5. **Import existing history.** One-off manual command after installation:
-   ```sh
-   atuin import zsh
-   ```
-   (reads the current `$HISTFILE = $XDG_STATE_HOME/zsh/history`).
+**Why.** User dislikes screenshots piling up on the Desktop.
 
-6. **Cross-machine sync (optional, separate step).**
-   - `atuin register` / `atuin login` for their server, or self-hosted.
-   - The encryption key (`atuin key`) is a secret — store it in 1Password and render via a chezmoi template, by analogy with `private_secrets.zsh.tmpl`. **Do not commit the key in plaintext.**
+**Steps.** Add to `run_once_before_macos-defaults.sh` (or a small dedicated script):
+```sh
+mkdir -p "${HOME}/Library/Mobile Documents/com~apple~CloudDocs/Screenshots"
+defaults write com.apple.screencapture location \
+  -string "${HOME}/Library/Mobile Documents/com~apple~CloudDocs/Screenshots"
+defaults write com.apple.screencapture type -string "png"
+defaults write com.apple.screencapture disable-shadow -bool true
+killall SystemUIServer
+```
 
-### Verification
+**Watch out.**
+- The iCloud path contains a space (`Mobile Documents`), so `~` won't expand — use the full `${HOME}/…` quoted.
+- Screenshots then upload to iCloud and count against quota; if you shoot in bursts that's noticeable.
+- Editing `run_once_before_macos-defaults.sh` changes its hash, so chezmoi re-runs the whole script on next `apply` (fine — it's idempotent).
 
-- New shell starts without errors: `zsh -i -c exit`.
-- `Ctrl+R` opens atuin, `↑`/`↓` still do substring search.
-- `Ctrl+T` (fzf files) and `Alt+C` (fzf cd) aren't broken.
-- `atuin stats` shows the imported history.
+---
 
-### Open questions
+## atuin: remaining optional follow-ups
 
-- Is sync needed at all, or is there just one machine? If one — skip step 6, and the feature's value drops (see discussion).
-- Keep `zsh-history-substring-search` on the arrows, or hand history entirely to atuin (`↑` → atuin in directory mode)? Zone splitting is safer, but atuin-on-arrows gives a more uniform UX.
+atuin itself is **installed and wired** (`rc.d/55-atuin.zsh`, `brew "atuin"`, history imported). Ctrl-R → atuin, Up/Down → zsh-history-substring-search. Optional extras not yet done:
+
+- **`dot_config/atuin/config.toml`** — tune search UX (e.g. `style = "compact"`, `inline_height = 20`, `filter_mode = "global"`, `filter_mode_shell_up_key_binding = "directory"`). XDG path maps directly: `dot_config/atuin/config.toml` → `~/.config/atuin/config.toml`.
+- **Cross-machine sync** — `atuin register`/`login` (hosted or self-hosted). The encryption key (`atuin key`) is a **secret**: store in 1Password and render via a chezmoi template like `private_secrets.zsh.tmpl`. Never commit it in plaintext. Only worth it with a second machine.

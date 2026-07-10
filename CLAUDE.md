@@ -56,7 +56,9 @@ There is no build/lint/test suite. After editing, run `chezmoi diff` (or `chezmo
 
 **ZSH lives under `ZDOTDIR=~/.config/zsh`, not `$HOME`.** `dot_zshenv` (the only zsh file in `$HOME`) bootstraps `ZDOTDIR` and manually sources `$ZDOTDIR/.zshenv`. Startup chain: `~/.zshenv` → `zsh/.zshenv` (XDG dirs, EDITOR) → `zsh/.zprofile` (Homebrew shellenv) → `zsh/.zshrc` (interactive setup).
 
-**`.zshrc` plugin order is load-bearing.** The sequence must be: `compinit` → fzf-tab → (starship, fzf, zoxide) → zsh-autosuggestions → zsh-syntax-highlighting → zsh-history-substring-search. fzf-tab must load after compinit but before widget-wrapping plugins; history-substring-search must be last. Don't reorder when editing.
+**`.zshrc` is a loader; the real config lives in `dot_config/zsh/rc.d/NN-topic.zsh`.** `.zshrc` sources `rc.d/*.zsh(N)` in numeric-prefix order, so the prefix encodes load order. To add config, drop a new `NN-topic.zsh` in `rc.d/` with an `NN` that places it correctly — no need to touch `.zshrc`.
+
+**The load order across those files is load-bearing.** The sequence must be: `20-homebrew` (`$BREW_PREFIX`) → `30-appearance` (`$LS_COLORS`) → `40-completion` (compinit → fzf-tab) → `50-tools` (starship, fzf, zoxide, mise, then zsh-autosuggestions → zsh-syntax-highlighting → zsh-history-substring-search LAST) → `55-atuin` → `60-keybindings`. fzf-tab must load after compinit but before widget-wrapping plugins; history-substring-search must be sourced last among the plugins. atuin (`55`) owns Ctrl-R (overrides fzf's) and is initialized with `--disable-up-arrow` so Up/Down stay on zsh-history-substring-search. Don't reorder the prefixes when editing.
 
 **No plugin manager.** Plugins come from Homebrew (sourced from `$BREW_PREFIX/share/...`), except fzf-tab, which chezmoi clones via `.chezmoiexternal.toml` into `~/.local/share/zsh/plugins/`.
 
