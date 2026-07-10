@@ -53,9 +53,22 @@ killall SystemUIServer
 
 ---
 
-## atuin: remaining optional follow-ups
+## atuin: configuration (`config.toml`)
 
-atuin itself is **installed and wired** (`rc.d/55-atuin.zsh`, `brew "atuin"`, history imported). Ctrl-R → atuin, Up/Down → zsh-history-substring-search. Optional extras not yet done:
+atuin is **installed and wired** (`rc.d/55-atuin.zsh`, `brew "atuin"`, history imported). Ctrl-R → atuin, Up/Down → zsh-history-substring-search. Next: add a config file to tune it to taste.
 
-- **`dot_config/atuin/config.toml`** — tune search UX (e.g. `style = "compact"`, `inline_height = 20`, `filter_mode = "global"`, `filter_mode_shell_up_key_binding = "directory"`). XDG path maps directly: `dot_config/atuin/config.toml` → `~/.config/atuin/config.toml`.
-- **Cross-machine sync** — `atuin register`/`login` (hosted or self-hosted). The encryption key (`atuin key`) is a **secret**: store in 1Password and render via a chezmoi template like `private_secrets.zsh.tmpl`. Never commit it in plaintext. Only worth it with a second machine.
+**Steps.** Add `dot_config/atuin/config.toml` as chezmoi source state (XDG maps directly: `dot_config/atuin/config.toml` → `~/.config/atuin/config.toml`). Starter worth reviewing:
+```toml
+# ~/.config/atuin/config.toml
+style = "compact"                              # or "full"
+inline_height = 20                             # don't take the whole screen
+filter_mode = "global"                         # Ctrl-R default scope
+filter_mode_shell_up_key_binding = "directory" # (only relevant if up-arrow is given to atuin)
+show_preview = true
+enter_accept = false                           # Enter edits the line, doesn't run it (safer)
+```
+Decisions to make when doing it: search style (`compact`/`full`), default `filter_mode` (global vs directory vs session), and `enter_accept` behaviour. Keep it small — only override what differs from defaults.
+
+## atuin: cross-machine sync (optional)
+
+Only worth it with a second machine. `atuin register`/`login` (hosted or self-hosted). The encryption key (`atuin key`) is a **secret**: store in 1Password and render via a chezmoi template like `private_secrets.zsh.tmpl`. Never commit it in plaintext.
