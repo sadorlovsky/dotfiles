@@ -1,0 +1,10 @@
+# catppuccin_mocha, but with a transparent editor canvas so the WezTerm
+# background image shows through Helix instead of a solid fill. This removes the
+# "frame" effect: WezTerm's window padding (kept for breathing room in the plain
+# shell) used to reveal the background image only around a solid Helix fill.
+# Clearing ui.background lets the image show under the text too, so padding and
+# text area look identical and the border disappears.
+inherits = "catppuccin_mocha"
+
+# No `bg` key → Helix emits no background color → terminal (image) shows through.
+"ui.background" = {}

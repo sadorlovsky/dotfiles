@@ -1,8 +1,10 @@
 # ~/.config/helix/config.toml
-# Theme: catppuccin_mocha (dark) to match the zsh/WezTerm dark default.
+# Theme: catppuccin_mocha_transparent (dark) — a local override in themes/ that
+# clears ui.background so the WezTerm background image shows through instead of a
+# solid fill (kills the padding "frame"). Matches the zsh/WezTerm dark default.
 # For light macOS appearance switch to "gruvbox_light_hard". Helix has no native
 # runtime light/dark follow — see ROADMAP for an optional hx wrapper.
-theme = "catppuccin_mocha"
+theme = "catppuccin_mocha_transparent"
 
 [editor]
 line-number = "relative"          # relative numbers → fast j/k motions with counts
@@ -10,7 +12,6 @@ cursorline = true                 # highlight the line the cursor is on
 color-modes = true                # colour the mode indicator by mode
 true-color = true                 # WezTerm is truecolor; don't let $TERM downgrade
 bufferline = "multiple"           # show a buffer tab bar only when >1 buffer is open
-rulers = [80, 100]                # vertical guides at 80/100 cols
 scrolloff = 8                     # keep 8 lines of context above/below the cursor
 text-width = 80
 default-line-ending = "lf"
