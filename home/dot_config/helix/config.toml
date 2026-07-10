@@ -51,11 +51,15 @@ skip-levels = 1
 enable = false                    # off globally; enabled for prose in languages.toml
 
 [editor.whitespace.render]
-trailing = "all"                  # surface trailing whitespace…
-nbsp = "all"                      # …and non-breaking spaces (a classic invisible bug)
+space = "all"                     # show every space (also surfaces trailing space)
+tab = "all"                       # show tabs (distinguishes tab vs space indentation)
+nbsp = "all"                      # non-breaking spaces (a classic invisible bug)
+newline = "none"                  # don't clutter line ends
 
 [editor.whitespace.characters]
-trailing = "·"
+space = "·"
+tab = "→"
+tabpad = " "
 nbsp = "⍽"
 
 [editor.search]
