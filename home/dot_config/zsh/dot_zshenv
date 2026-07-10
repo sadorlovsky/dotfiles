@@ -10,6 +10,16 @@ export XDG_STATE_HOME="$HOME/.local/state"
 export EDITOR="hx"
 export VISUAL="hx"
 
+# ---------- Go ----------
+# Keep GOPATH out of $HOME; the module cache and `go install` binaries live
+# under XDG data instead of the default ~/go.
+export GOPATH="$XDG_DATA_HOME/go"
+
+# ---------- macOS shell sessions ----------
+# Disable Terminal.app's per-session save/restore (the ~/.zsh_sessions dir);
+# atuin plus our own HISTFILE already handle history.
+export SHELL_SESSIONS_DISABLE=1
+
 # ---------- fzf / fzf-tab shared preview ----------
 # One dispatcher for CTRL-T, ALT-C and every fzf-tab completion. Defined here in
 # .zshenv (not .zshrc) so it also exists in the non-interactive zsh that fzf
