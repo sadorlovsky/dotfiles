@@ -31,6 +31,12 @@ $time\
 [ ](fg:#33658A)\
 """
 
+# The first prompt of a new tab races the whole zsh startup (compinit, atuin,
+# mise, plugins), so the cold `git` call can blow past the 500ms default and
+# print a "command timed out" warning. 2s is slack, not a real wait: warm git
+# calls here take ~20-30ms.
+command_timeout = 2000
+
 # Disable the blank line at the start of the prompt
 # add_newline = false
 
