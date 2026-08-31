@@ -25,3 +25,14 @@ jqi() {
   rm -f -- "$tmp"
   [[ -n $filter ]] && print -r -- "$filter"
 }
+
+# claude — launch Claude Code with two globals stripped, for this process only:
+#   ANTHROPIC_API_KEY (secrets.zsh) — its presence makes Claude Code bill the
+#     API key instead of the claude.ai (Max) subscription.
+#   DO_NOT_TRACK (15-privacy.zsh)   — it disables feature-flag evaluation, which
+#     Remote Control requires; with it set, /remote-control won't even register.
+# Both stay exported globally for every other tool. env execs the real `claude`
+# binary from PATH, so there's no recursion back into this function.
+claude() {
+  env -u ANTHROPIC_API_KEY -u DO_NOT_TRACK claude "$@"
+}
