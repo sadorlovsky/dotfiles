@@ -110,12 +110,12 @@ wezterm.action.ShowLauncherArgs({ flags = "FUZZY|DOMAINS" })
 
 **Goal.** Run chezmoi on Linux SSH hosts and deploy the **full** zsh experience there (plugins included), while the 3 personal MacBooks keep the macOS-only bits. All three Macs share one config, so the split is purely **`.chezmoi.os` (darwin vs linux)** — no per-machine tags needed.
 
-**Substrate.** The `rc.d/NN-*.zsh` topic split is already ideal: gate whole topics per OS via `.chezmoiignore.tmpl`.
+**Substrate.** The `rc.d/NN-*.zsh` topic split is already ideal: gate whole topics per OS in `.chezmoiignore` — chezmoi always treats that file as a template (it already carries the 1Password guard), so no `.chezmoiignore.tmpl` is needed.
 
 **Topic portability:**
-- Portable as-is: `00-history`, `10-options`, `15-privacy`, `60-keybindings`, `85-functions` (jqi).
-- macOS-only (drop on Linux): `30-appearance` (`defaults read AppleInterfaceStyle`), `80-wezterm` (app path), and the whole `dot_config/wezterm/`.
-- Needs an OS-aware variant: `20-homebrew`, `40-completion`, `50-tools`, `55-atuin`, `90-aliases` — they assume Homebrew paths / macOS.
+- Portable as-is: `00-history`, `10-options`, `15-privacy`, `25-local-bin`, `60-keybindings`, `70-title`, `85-functions` (jqi; the `claude` wrapper is a no-op where Claude Code isn't installed), `95-pager`.
+- macOS-only (drop on Linux): `30-appearance` (`defaults read AppleInterfaceStyle`), `80-wezterm` (app path), the whole `dot_config/wezterm/`, and `run_once_before_macos-defaults.sh` (already self-exits on non-Darwin).
+- Needs an OS-aware variant: `20-homebrew`, `40-completion`, `50-tools`, `55-atuin`, `90-aliases`, `99-zsh-ai` — they assume Homebrew paths / macOS.
 
 **Key open decision — how plugins/tools install on Linux** (pick before building):
 - **Option A (server-friendly, recommended):** clone zsh plugins (fzf-tab already; add autosuggestions/syntax-highlighting/history-substring-search) via `.chezmoiexternal.toml` into `$XDG_DATA_HOME/zsh/plugins/` on **all** OSes, and refactor `50-tools`/`40-completion` to source from that XDG dir instead of `$BREW_PREFIX/share`. Install the binaries (atuin/starship/fzf/zoxide/eza/bat/fd) via **mise** or official installers on Linux. No linuxbrew on servers.
@@ -123,14 +123,14 @@ wezterm.action.ShowLauncherArgs({ flags = "FUZZY|DOMAINS" })
 
 **Steps (after deciding A/B):**
 1. `.chezmoi.toml.tmpl`: expose `os` in `[data]` (or just use `.chezmoi.os` directly in templates).
-2. `.chezmoiignore.tmpl`: `{{ if ne .chezmoi.os "darwin" }}` block dropping the macOS-only topics + `dot_config/wezterm`.
+2. `.chezmoiignore`: a `{{ if ne .chezmoi.os "darwin" }}` block dropping the macOS-only topics + `dot_config/wezterm`.
 3. OS-aware Brewfile: the `run_onchange` installer already uses a heredoc — template it so Linux installs a **subset** (no casks/fonts) or skips brew entirely (Option A).
 4. Make plugin sourcing path-agnostic per the chosen option.
 5. Test: `chezmoi init` on one Linux host, confirm only portable topics land and the shell starts clean.
 
 ## chezmoi: machine-class data model (when a work / divergent machine appears)
 
-**What.** Boolean feature tags (`work` / `personal` / `headless`) computed in `.chezmoi.toml.tmpl` from hostname / auto-detection, exposed in `[data]`, then used to gate topics and secrets via `.chezmoiignore.tmpl`. Idea from twpayne (chezmoi's author).
+**What.** Boolean feature tags (`work` / `personal` / `headless`) computed in `.chezmoi.toml.tmpl` from hostname / auto-detection, exposed in `[data]`, then used to gate topics and secrets via `.chezmoiignore`. Idea from twpayne (chezmoi's author).
 
 **Why deferred.** Currently redundant: the 3 MacBooks are identical (no work/personal split), and headless machines are already caught by `.chezmoi.os == "linux"` (see the cross-platform task). Worth doing only when a **work Mac** appears (different git email/signing, different Brewfile) or the Macs diverge — complements the git `includeIf` task.
 
@@ -146,7 +146,7 @@ wezterm.action.ShowLauncherArgs({ flags = "FUZZY|DOMAINS" })
 [data]
   work = {{ $work }}
 ```
-Then `{{ if .work }}…{{ end }}` in `.chezmoiignore.tmpl` / templates gates work-only or personal-only topics.
+Then `{{ if .work }}…{{ end }}` in `.chezmoiignore` / templates gates work-only or personal-only topics.
 
 ## zsh: macOS-style Shift-selection in the command line (ZLE)
 
@@ -163,7 +163,7 @@ Then `{{ if .work }}…{{ end }}` in `.chezmoiignore.tmpl` / templates gates wor
 
 ## Helix: follow macOS light/dark appearance
 
-**What.** Make Helix's theme track macOS appearance (catppuccin_mocha ⇄ gruvbox_light_hard) like zsh (`LS_COLORS`/`BAT_THEME`) and WezTerm already do. Currently `config.toml` hardcodes `catppuccin_mocha`.
+**What.** Make Helix's theme track macOS appearance (catppuccin_mocha ⇄ gruvbox_light_hard) like zsh (`LS_COLORS`/`BAT_THEME`) and WezTerm already do. Currently `config.toml` hardcodes `catppuccin_mocha_transparent` (a local override in `helix/themes/` that clears `ui.background`; the light counterpart would be `gruvbox_light_hard`).
 
 **Why deferred.** Helix has **no native runtime light/dark switch** and `config.toml` has no include/env-theme mechanism, so there's no clean one-file solution.
 
