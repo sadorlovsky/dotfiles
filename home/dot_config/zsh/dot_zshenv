@@ -1,3 +1,11 @@
+# ---------- PATH hygiene ----------
+# Keep $path — and therefore $PATH — free of duplicate entries. Every re-entrant
+# shell re-runs the prepends in .zprofile (brew shellenv) and rc.d/25-local-bin:
+# `exec zsh`, a manual `source $ZDOTDIR/.zshrc`, or a login shell nested inside
+# another one. Without this they stack the same directories on each pass.
+# Set in .zshenv because that runs before the first prepend does.
+typeset -U path PATH
+
 # ---------- XDG base directories ----------
 # Centralizes config/cache/data locations
 export XDG_CONFIG_HOME="$HOME/.config"
