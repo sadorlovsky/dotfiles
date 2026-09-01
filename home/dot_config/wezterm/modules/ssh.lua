@@ -2,7 +2,9 @@
 -- SSH domains: auto-generate a WezTerm ssh_domain for every host in your
 -- ~/.ssh/config, so `wezterm connect <host>` works for each host you already
 -- defined — with WezTerm's own tab/pane handling over the connection.
---   Connect:  `wezterm connect <host>`, or the launcher (Ctrl+Shift+L → SSH).
+--   Connect:  `wezterm connect <host>`, or the Command Palette (Ctrl+Shift+P).
+-- No launcher keybinding is bound yet — see ROADMAP (Ctrl+Shift+L is taken by
+-- WezTerm's own ShowDebugOverlay, so pick a different key).
 -- Wildcard stanzas (Host *, Host foo-*) are skipped — they aren't real targets.
 -- Wrapped in pcall so a malformed ssh config can never break the whole config.
 -- ============================================================================
