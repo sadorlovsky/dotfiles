@@ -7,7 +7,22 @@
      `op` itself: invoking op here would trigger the CLI<->app integration
      prompt (Touch ID) and then hang waiting on the absent desktop app.
      ignore = leave the existing rendered secrets.zsh untouched, preserving
-     a previously-set key. */}}
+     a previously-set key.
+
+     Do not "improve" this into an `op whoami` check. Measured 2026-09-01:
+     it answers a different question. whoami reports on a CLI session (the
+     kind `op signin` creates), while onepasswordRead goes through the
+     CLI<->app integration and biometrics, which creates no CLI session —
+     so whoami printed "account is not signed in" at the same moment
+     onepasswordRead was reading secrets fine. Gating on it would skip
+     secrets.zsh on a perfectly healthy machine. `op account list` is no
+     better: it answers from local config without touching the vault.
+
+     What this guard still misses is the app running but locked, which
+     ends in onepasswordRead's authorization timeout and aborts apply.
+     That state is not cheaply detectable: any probe able to see it is the
+     same call as the real read and hangs identically. Unlock 1Password
+     before a full apply. */}}
 {{ if ne (output "sh" "-c" "pgrep -xq 1Password && echo ok || true" | trim) "ok" }}
 .config/zsh/secrets.zsh
 {{ end }}
