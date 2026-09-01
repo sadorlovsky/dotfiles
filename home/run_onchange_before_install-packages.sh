@@ -22,6 +22,7 @@ brew "zoxide"
 brew "atuin"              # SQLite-backed shell history + fuzzy Ctrl-R search
 brew "fzf"
 brew "fd"
+brew "ripgrep"            # rg
 brew "eza"
 brew "bat"
 brew "chafa"             # terminal image previews (fzf CTRL-T on images)
@@ -33,6 +34,8 @@ brew "helix"              # $EDITOR (hx)
 brew "chezmoi"
 brew "age"                # decrypts encrypted_ source files (e.g. ~/.ssh/config)
 brew "mise"
+brew "uv"                 # Python runtimes + `uv tool install` shims in ~/.local/bin
+brew "gh"                 # GitHub CLI
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
 brew "zsh-history-substring-search"
