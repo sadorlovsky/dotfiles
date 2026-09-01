@@ -6,3 +6,22 @@ url = "https://github.com/Aloxaf/fzf-tab.git"
 refreshPeriod = "168h"
 clone.args = ["--depth=1"]
 pull.args = ["--ff-only"]
+
+# Personal Claude Code skills — private repo, because they name hosts, ssh
+# aliases, backup buckets and what else shares a box. Cloned here rather than
+# straight into ~/.claude/skills for two reasons: that directory already holds
+# skills installed by other tooling (an external git-repo would claim the whole
+# directory), and Claude Code only discovers skills exactly one level deep, so
+# a repo checked out as skills/<repo>/<skill>/SKILL.md would be invisible.
+# Each skill is symlinked into place from dot_claude/skills/ instead.
+#
+# Over ssh, so it needs a working GitHub key at apply time. On a brand-new
+# machine the first apply installs the ssh config and this clone fails; the
+# second one succeeds. refreshPeriod means updates land within a week —
+# `chezmoi apply --refresh-externals` to pull them now.
+[".local/share/claude-skills"]
+type = "git-repo"
+url = "git@github.com:sadorlovsky/claude-skills.git"
+refreshPeriod = "168h"
+clone.args = ["--depth=1"]
+pull.args = ["--ff-only"]
