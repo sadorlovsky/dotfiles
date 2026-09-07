@@ -14,6 +14,7 @@ Personal macOS dotfiles managed with [chezmoi](https://www.chezmoi.io/). Files h
 - `home/dot_claude/modify_settings.json` → `~/.claude/settings.json`, *patched* rather than written: chezmoi runs the file as a script with the current target on stdin and replaces the target with its stdout
 - `home/dot_claude/skills/symlink_mastodon-upgrade` → `~/.claude/skills/mastodon-upgrade`, a **symlink** whose target is that file's contents
 - `home/private_dot_ssh/encrypted_private_config.age` → `~/.ssh/config`, decrypted on apply with the age identity
+- `home/private_dot_ssh/private_control/empty_dot_keep` → `~/.ssh/control/.keep`, an empty file whose only job is to make git carry the directory ssh multiplexes into
 - `home/.chezmoiremove` → declaratively deletes retired target paths on apply (see its header)
 
 Note: the live chezmoi source directory is `~/.local/share/chezmoi` (with `chezmoi source-path` resolving to its `home/` subdir), a separate checkout of this same repo. Edits in this working copy do not reach `$HOME` until pushed and pulled via `chezmoi update`, or applied explicitly with `chezmoi apply --source <this dir>`.
@@ -103,6 +104,8 @@ Related: `rc.d/85-functions.zsh` wraps `claude` in a function that runs it with 
 **The repo is a PUBLIC GitHub repo, so anything reconnaissance-sensitive is age-encrypted, not committed in the clear.** `~/.ssh/config` (internal hostnames, IPs, users) lives in source as `private_dot_ssh/encrypted_private_config.age`. Encryption config is in `.chezmoi.toml.tmpl` (`encryption = "age"` + a public `recipient` — safe to commit). The **private** age identity lives only at `~/.config/chezmoi/key.txt` and in 1Password (document `chezmoi-age-key`, Private vault); it is never committed. To edit the ssh config, use `chezmoi edit ~/.ssh/config` (chezmoi decrypts, you edit plaintext, it re-encrypts). To manage another sensitive file the same way: `chezmoi add --encrypt <path>`.
 
 The ssh setup pins one identity per host (`IdentityFile` + `IdentitiesOnly`), because the 1Password agent serves several keys in its own order — GitHub would authenticate as whichever it accepted first, and the NAS's sshd ran out of attempts before a password was offered. The second GitHub identity needs a host alias *and* its own `ControlPath`: `%C` hashes the resolved hostname, identical for both aliases, so a shared path would reuse the other's master connection and with it the wrong identity. The public halves live in source as `encrypted_*.pub.age` — not because public keys are secret, but because chezmoi encrypts contents and not names, so the names are themselves disclosure; they are named for their role here, deliberately.
+
+Those `ControlPath`s need `~/.ssh/control/` to exist — ssh creates the sockets but never the directory, so without it every connection on a fresh machine dies with `unix_listener: cannot bind to path`. It is managed as `private_dot_ssh/private_control/empty_dot_keep`: an empty `.keep` only because git drops empty directories, and the directory is deliberately **not** `exact_`, which would make chezmoi delete the live control sockets on every apply.
 
 **New-machine bootstrap.** The one-liner in `README.md` runs `install.sh` (repo
 root, outside the source root), which sequences Xcode CLT → Homebrew → chezmoi +
