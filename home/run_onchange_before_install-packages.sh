@@ -51,6 +51,9 @@ cask "wezterm@nightly"
 cask "1password"
 cask "1password-cli"
 
+# Apps
+cask "raycast"            # launcher / clipboard history; replaces Spotlight
+
 # Fonts — Fairfax Hax (bundled in the Fairfax family) is the WezTerm UI font;
 # JetBrains Mono is the WezTerm text font.
 cask "font-fairfax"
