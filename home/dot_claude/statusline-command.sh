@@ -69,10 +69,13 @@ else
   tier=$(echo "$acct" | cut -f1)
   has_extra=$(echo "$acct" | cut -f2)
   extra_off=$(echo "$acct" | cut -f3)
+  # Max 5x / Max 20x were renamed to Max / Ultra, but the rate-limit tier
+  # strings still carry the old names (default_claude_max_5x / _max_20x).
+  # *ultra* covers a tier string that adopts the new name; it must precede
+  # *max* so an "ultra" tier can't fall through to Max.
   case "$tier" in
-    *max_20x*) plan="Max 20x" ;;
-    *max_5x*)  plan="Max 5x"  ;;
-    *max*)     plan="Max"     ;;
+    *ultra*|*max_20x*) plan="Ultra" ;;
+    *max*)             plan="Max"   ;;
     *pro*)     plan="Pro"     ;;
     *)         plan="Sub"     ;;
   esac
