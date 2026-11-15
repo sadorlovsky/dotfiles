@@ -1,0 +1,16 @@
+#!/bin/sh
+# (Re)load the telemetry-off launchd agent. chezmoi re-runs this whenever the
+# plist changes — its hash is embedded below, so editing the plist is enough.
+# plist hash: {{ include "Library/LaunchAgents/com.github.sadorlovsky.telemetry-off.plist.tmpl" | sha256sum }}
+set -eu
+[ "$(uname -s)" = "Darwin" ] || exit 0
+
+label=com.github.sadorlovsky.telemetry-off
+plist="$HOME/Library/LaunchAgents/$label.plist"
+mkdir -p "$HOME/.local/state/telemetry-off"
+# WatchPaths entries should exist before launchd starts watching them.
+mkdir -p "$HOME/.local/share/uv/tools" "$HOME/.local/share/mise/installs"
+
+launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" "$plist"
+echo "telemetry-off: launchd agent loaded"

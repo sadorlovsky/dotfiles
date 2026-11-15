@@ -1,0 +1,348 @@
+#!/bin/zsh -f
+# telemetry-off — apply known telemetry opt-outs to installed software.
+#
+# Knowledge lives in optouts.json next to this script (chezmoi-managed; edit the
+# SOURCE copy under `chezmoi source-path`, then `chezmoi apply`). State lives in
+# $XDG_STATE_HOME/telemetry-off/. Runs from three places:
+#   - by hand / the disable-telemetry skill:  scan, apply, pending
+#   - launchd (WatchPaths on Cellar, Caskroom, /Applications):  watch --wait
+#   - the Claude Code PostToolUse hook after an install command:  watch
+#
+# Usage:
+#   telemetry-off scan [--json]      inventory + status (known | none | unknown)
+#   telemetry-off apply [--all | <id>...]   run opt-out actions (default: --all)
+#   telemetry-off watch [--wait] [--quiet]  apply to software new since last run
+#   telemetry-off pending [--since SECS]    installed software with no known opt-out
+#   telemetry-off recent [SECS]      log lines from the last SECS (default 900)
+#   telemetry-off env                regenerate the env-var file only
+
+emulate -L zsh
+setopt pipefail no_nomatch extended_glob
+
+# launchd gives a bare environment: no Homebrew on PATH, no XDG vars.
+export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$HOME/.local/bin:$HOME/.local/share/mise/shims:/usr/bin:/bin:/usr/sbin:/sbin"
+export HOMEBREW_NO_ANALYTICS=1 HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ENV_HINTS=1
+
+SELF_DIR=${0:A:h}
+DB=${TELEMETRY_OFF_DB:-$SELF_DIR/optouts.json}
+STATE=${XDG_STATE_HOME:-$HOME/.local/state}/telemetry-off
+BREW=/opt/homebrew
+mkdir -p $STATE
+SEEN=$STATE/seen.tsv          # kind<TAB>name of everything already processed
+PENDING=$STATE/pending.tsv    # epoch<TAB>kind<TAB>name with no known opt-out
+LOG=$STATE/log.tsv            # epoch<TAB>event<TAB>id<TAB>detail
+ENVFILE=$STATE/env.zsh        # sourced by rc.d/15-privacy.zsh
+QUIET=0
+
+say()  { (( QUIET )) || print -r -- "$*"; }
+warn() { print -ru2 -- "telemetry-off: $*"; }
+log()  { print -r -- "$EPOCHSECONDS"$'\t'"$1"$'\t'"$2"$'\t'"$3" >> $LOG; }
+zmodload zsh/datetime
+
+[[ -r $DB ]] || { warn "database not found: $DB"; exit 1; }
+jq -e . $DB >/dev/null 2>&1 || { warn "database is not valid JSON: $DB"; exit 1; }
+
+# ---------------------------------------------------------------------------
+# Inventory: one "kind<TAB>name" line per piece of user-facing software.
+# kinds: formula (installed on request — not dependencies), cask, app (bundle id,
+# only apps no cask accounts for, Apple's own skipped), mise, uv, npm, bun.
+# Reads directories and receipts directly — no `brew` call, so it's fast and
+# safe to run while brew itself is still busy.
+# ---------------------------------------------------------------------------
+inventory() {
+  local -a receipts cask_apps
+  receipts=($BREW/Cellar/*/*/INSTALL_RECEIPT.json(N))
+  (( $#receipts )) && jq -r 'select(.installed_on_request == true) | input_filename' $receipts 2>/dev/null \
+    | awk -F/ '{print "formula\t" $(NF-2)}' | sort -u
+
+  local c
+  for c in $BREW/Caskroom/*(N/); do
+    print -r -- "cask"$'\t'"${c:t}"
+  done
+  local -a creceipts=($BREW/Caskroom/*/.metadata/INSTALL_RECEIPT.json(N))
+  (( $#creceipts )) && cask_apps=(${(f)"$(jq -r '.uninstall_artifacts[]? | .app? // empty | .[] | strings' $creceipts 2>/dev/null)"})
+
+  local a id
+  for a in /Applications/*.app(N) $HOME/Applications/*.app(N); do
+    (( ${cask_apps[(Ie)${a:t}]} )) && continue
+    id=$(plutil -extract CFBundleIdentifier raw -o - "$a/Contents/Info.plist" 2>/dev/null) || continue
+    [[ -z $id || $id == com.apple.* ]] && continue
+    print -r -- "app"$'\t'"$id"
+  done
+
+  local d
+  for d in $HOME/.local/share/mise/installs/*(N/); do print -r -- "mise"$'\t'"${d:t}"; done
+  for d in $HOME/.local/share/uv/tools/*(N/);      do print -r -- "uv"$'\t'"${d:t}"; done
+  local nm
+  for nm in $HOME/.local/share/mise/installs/node/*/lib/node_modules(N/) $BREW/lib/node_modules(N/); do
+    for d in $nm/@*/*(N/) $nm/[^@.]*(N/); do
+      [[ ${d:t} == (npm|corepack) ]] && continue
+      print -r -- "npm"$'\t'"${d#$nm/}"
+    done
+  done | sort -u
+  nm=$HOME/.bun/install/global/node_modules
+  for d in $nm/@*/*(N/) $nm/[^@.]*(N/); do
+    print -r -- "bun"$'\t'"${d#$nm/}"
+  done
+}
+
+# status<TAB>kind<TAB>name<TAB>ids  for each inventory line on stdin.
+# An entry matches when match[kind] lists the name; an entry with no `match`
+# matches any kind by its own id.
+resolve() {
+  jq -R -r --slurpfile db $DB '
+    ($db[0].tools // {}) as $t | ($db[0].no_telemetry // []) as $none
+    | split("\t") | {kind: .[0], name: .[1]} as $i
+    | [ $t | to_entries[]
+        | select(if .value.match then ((.value.match[$i.kind] // []) | index($i.name)) != null
+                 else .key == $i.name end)
+        | .key ] as $ids
+    | if ($ids | length) > 0 then ["known", $i.kind, $i.name, ($ids | join(","))]
+      elif ($none | index($i.name)) != null then ["none", $i.kind, $i.name, ""]
+      else ["unknown", $i.kind, $i.name, ""] end
+    | @tsv'
+}
+
+# ---------------------------------------------------------------------------
+# Actions
+# ---------------------------------------------------------------------------
+expand() { local p=$1; [[ $p == "~/"* ]] && p=$HOME/${p#\~/}; print -r -- $p; }
+
+app_running() { [[ -n $1 ]] && pgrep -qf "$1" 2>/dev/null; }
+
+do_cmd() { # id json
+  local id=$1 run check
+  run=$(jq -r .run <<< $2); check=$(jq -r '.check // empty' <<< $2)
+  if [[ -n $check ]] && zsh -c "$check" </dev/null >/dev/null 2>&1; then
+    say "  = $id: already off ($run)"; return
+  fi
+  local out
+  if out=$(zsh -c "$run" </dev/null 2>&1); then
+    say "  ✓ $id: $run"; log applied $id "cmd: $run"
+  else
+    say "  ✗ $id: $run failed: ${out[1,200]}"; log failed $id "cmd: $run: ${out[1,200]}"
+  fi
+}
+
+do_defaults() { # id json
+  local id=$1 dom key kind val cur want
+  dom=$(jq -r .domain <<< $2); key=$(jq -r .key <<< $2)
+  kind=$(jq -r '.kind // "string"' <<< $2); val=$(jq -r '.value | tostring' <<< $2)
+  cur=$(defaults read $dom $key 2>/dev/null)
+  want=$val
+  [[ $kind == bool ]] && { [[ $val == (true|1|yes|YES) ]] && want=1 || want=0; }
+  if [[ -n $cur && $cur == $want ]]; then say "  = $id: $dom $key already $val"; return; fi
+  if defaults write $dom $key -$kind $val 2>/dev/null; then
+    say "  ✓ $id: defaults write $dom $key -$kind $val"
+    log applied $id "defaults: $dom $key=$val"
+    app_running $dom && say "    (app is running — quit and reopen it so it doesn't overwrite the change)"
+  else
+    say "  ✗ $id: defaults write $dom $key failed"; log failed $id "defaults: $dom $key"
+  fi
+}
+
+do_json() { # id json
+  local id=$1 file kp val
+  file=$(expand "$(jq -r .file <<< $2)"); kp=$(jq -c .path <<< $2); val=$(jq -c .value <<< $2)
+  if [[ ! -e $file ]]; then
+    # Only create a config file when the entry says that's safe ("create": true);
+    # an app's own state file (Chrome's Local State) must be written by the app first.
+    if [[ $(jq -r '.create // false' <<< $2) == true ]]; then
+      mkdir -p ${file:h}; print '{}' > $file
+    else
+      say "  … $id: $file doesn't exist yet — launch the app once, then: telemetry-off apply $id"
+      log manual $id "json: $file missing (launch app once, re-apply)"
+      return
+    fi
+  fi
+  if ! cat $file >/dev/null 2>&1; then
+    say "  ✗ $id: can't read $file (permissions / sandbox)"; log failed $id "json: $file unreadable"; return
+  fi
+  # Apps that keep a file as live state rewrite it on quit — only touch it while
+  # the app is closed ("requires_quit": "<process name>").
+  local proc; proc=$(jq -r '.requires_quit // empty' <<< $2)
+  if [[ -n $proc ]] && pgrep -xq "$proc"; then
+    say "  … $id: $proc is running — quit it, then: telemetry-off apply $id"
+    log manual $id "json: $file (quit $proc first, re-apply)"; return
+  fi
+  if ! jq -e . $file >/dev/null 2>&1; then
+    # JSONC (comments / trailing commas): never rewrite it — but strip comments
+    # and trailing commas to *check*, so an already-correct file stays quiet.
+    if perl -0pe 's{/\*.*?\*/}{}gs; s{^\s*//.*$}{}mg; s{,(\s*[\}\]])}{$1}g' $file 2>/dev/null \
+         | jq -e --argjson p $kp --argjson v $val 'getpath($p) == $v' >/dev/null 2>&1; then
+      say "  = $id: $file already set"; return
+    fi
+    say "  ! $id: $file is JSONC; set ${(j:.:)${(f)$(jq -r '.[]' <<< $kp)}} = $val by hand"
+    log manual $id "json: $file $kp=$val (file is JSONC)"
+    return
+  fi
+  if jq -e --argjson p $kp --argjson v $val 'getpath($p) == $v' $file >/dev/null 2>&1; then
+    say "  = $id: $file already set"; return
+  fi
+  [[ -e $STATE/backup/${file//\//%} ]] || { mkdir -p $STATE/backup; cp $file $STATE/backup/${file//\//%}; }
+  local tmp=$file.telemetry-off.$$
+  if jq --argjson p $kp --argjson v $val 'setpath($p; $v)' $file > $tmp && mv $tmp $file; then
+    say "  ✓ $id: $file $kp = $val"; log applied $id "json: $file $kp=$val"
+  else
+    rm -f $tmp; say "  ✗ $id: could not update $file"; log failed $id "json: $file"
+  fi
+}
+
+do_manual() { # id json
+  local text; text=$(jq -r .text <<< $2)
+  say "  ! $id: manual step — $text"
+  log manual $1 "$text"
+}
+
+apply_ids() { # id...
+  local id a type
+  for id in "$@"; do
+    jq -e --arg id $id '.tools[$id]' $DB >/dev/null || { warn "no entry '$id'"; continue; }
+    jq -c --arg id $id '.tools[$id].actions[]?' $DB | while IFS= read -r a; do
+      type=$(jq -r .type <<< $a)
+      case $type in
+        env)      ;; # handled by write_env for every entry
+        cmd)      do_cmd $id $a ;;
+        defaults) do_defaults $id $a ;;
+        json)     do_json $id $a ;;
+        manual)   do_manual $id $a ;;
+        *)        warn "$id: unknown action type '$type'" ;;
+      esac
+    done
+  done
+}
+
+# Every env action in the database goes into one file, installed or not: an
+# opt-out variable for a tool that isn't there costs nothing, and this way a
+# tool installed by some route the watcher doesn't see is still covered.
+write_env() {
+  local tmp=$ENVFILE.$$
+  {
+    print "# Generated by telemetry-off from $DB — do not edit."
+    jq -r '.tools | to_entries[] | .key as $id | .value.actions[]?
+           | select(.type == "env") | "export \(.name)=\(.value | tostring | @sh)  # \($id)"' $DB | sort -u
+  } > $tmp && mv $tmp $ENVFILE
+}
+
+with_lock() {
+  local lock=$STATE/lock i
+  local -a stale
+  for i in {1..120}; do
+    # EXIT trap set inside a function fires when that function returns
+    mkdir $lock 2>/dev/null && { trap "rmdir $lock 2>/dev/null" EXIT; "$@"; return }
+    stale=($lock(Nmm+10))   # a crashed run's lock, older than 10 min
+    (( $#stale )) && rmdir $lock 2>/dev/null
+    sleep 1
+  done
+  warn "could not get lock $lock"; return 1
+}
+
+# ---------------------------------------------------------------------------
+# Commands
+# ---------------------------------------------------------------------------
+cmd_scan() {
+  local rows; rows=$(inventory | resolve)
+  if [[ $1 == --json ]]; then
+    jq -R -s 'split("\n") | map(select(length > 0) | split("\t")
+              | {status: .[0], kind: .[1], name: .[2], ids: (.[3] // "" | split(",") | map(select(length > 0)))})' <<< $rows
+  else
+    print -r -- $rows | sort | column -t -s $'\t'
+  fi
+}
+
+cmd_apply() {
+  write_env
+  local -a ids
+  if [[ $# -eq 0 || $1 == --all ]]; then
+    ids=(${(u)${(s:,:)${(j:,:)${(f)"$(inventory | resolve | awk -F'\t' '$1=="known"{print $4}')"}}}})
+    # entries with "always": true aren't tied to an inventory item (e.g. Homebrew itself)
+    ids+=(${(f)"$(jq -r '.tools | to_entries[] | select(.value.always == true) | .key' $DB)"})
+    ids=(${(u)ids})
+  else
+    ids=("$@")
+  fi
+  (( $#ids )) || { say "nothing to apply"; return }
+  apply_ids $ids
+}
+
+cmd_watch() {
+  local wait=0
+  [[ $1 == --wait ]] && wait=1
+  if (( wait )); then
+    # launchd fires as soon as the Cellar/Caskroom entry appears, which is before
+    # brew has linked binaries or moved the .app. Wait until brew is done.
+    local i
+    for i in {1..300}; do pgrep -qf 'Homebrew/brew\.(rb|sh)' || break; sleep 2; done
+    sleep 3
+  fi
+  with_lock watch_locked
+}
+
+watch_locked() {
+  write_env
+  local cur; cur=$(inventory | sort -u)
+  if [[ ! -e $SEEN ]]; then
+    # First run: take a baseline. Known opt-outs are applied (harmless), unknowns
+    # are queued silently — the skill reviews the backlog, not a notification.
+    print -r -- $cur > $SEEN
+    cmd_apply --all >/dev/null
+    print -r -- $cur | resolve | awk -F'\t' '$1=="unknown"{print 0 "\t" $2 "\t" $3}' >> $PENDING  # ts 0: backlog, not "new"
+    log baseline - "$(print -r -- $cur | wc -l | tr -d ' ') items"
+    return
+  fi
+  local new; new=$(comm -13 $SEEN <(print -r -- $cur))
+  print -r -- $cur > $SEEN
+  [[ -z $new ]] && return
+  local rows; rows=$(print -r -- $new | resolve)
+  local -a ids unknown
+  ids=(${(u)${(s:,:)${(j:,:)${(f)"$(awk -F'\t' '$1=="known"{print $4}' <<< $rows)"}}}})
+  unknown=(${(f)"$(awk -F'\t' '$1=="unknown"{print $3}' <<< $rows)"})
+  awk -F'\t' '{print $2 "\t" $3}' <<< $rows | while IFS=$'\t' read -r k n; do log installed $n $k; done
+  (( $#ids )) && apply_ids $ids
+  if (( $#unknown )); then
+    awk -F'\t' -v t=$EPOCHSECONDS '$1=="unknown"{print t "\t" $2 "\t" $3}' <<< $rows >> $PENDING
+    for n in $unknown; do log unknown $n "no opt-out on record"; done
+    say "no known opt-out for: ${(j:, :)unknown} — run the disable-telemetry skill"
+    notify "No known telemetry opt-out for ${(j:, :)unknown}. Run /disable-telemetry in Claude Code."
+  fi
+  (( $#ids )) && notify "Telemetry opt-outs applied: ${(j:, :)ids}"
+  return 0
+}
+
+notify() {
+  (( QUIET )) && [[ -z $TELEMETRY_OFF_NOTIFY ]] && return
+  osascript -e "display notification \"${1//\"/\\\"}\" with title \"telemetry-off\"" >/dev/null 2>&1
+}
+
+cmd_pending() {
+  local since=0
+  [[ $1 == --since ]] && since=$(( EPOCHSECONDS - $2 ))
+  [[ -e $PENDING ]] || return 0
+  # still-unknown items only; prune the ones the database has learned about since
+  local installed; installed=$(inventory | sort -u)
+  local unknown; unknown=$(print -r -- $installed | resolve | awk -F'\t' '$1=="unknown"{print $2 "\t" $3}')
+  # newest timestamp per item, restricted to items installed and still unknown
+  local keep; keep=$(awk -F'\t' '
+      FILENAME == "-" { u[$0] = 1; next }
+      { k = $2 "\t" $3; if (!(k in t) || $1 > t[k]) t[k] = $1 }
+      END { for (k in t) if (k in u) print t[k] "\t" k }' - $PENDING <<< $unknown | sort -n)
+  print -r -- $keep | sed '/^$/d' > $PENDING
+  [[ -n $keep ]] && awk -F'\t' -v s=$since '$1 >= s {print $2 "\t" $3}' <<< $keep
+  return 0
+}
+
+cmd_recent() {
+  local since=$(( EPOCHSECONDS - ${1:-900} ))
+  [[ -e $LOG ]] && awk -F'\t' -v s=$since '$1 >= s' $LOG
+  return 0
+}
+
+case $1 in
+  scan)    shift; cmd_scan "$@" ;;
+  apply)   shift; with_lock cmd_apply "$@" ;;
+  watch)   shift; [[ $* == *--quiet* ]] && QUIET=1; cmd_watch ${@:#--quiet} ;;
+  pending) shift; cmd_pending "$@" ;;
+  recent)  shift; cmd_recent "$@" ;;
+  env)     write_env ;;
+  *)       sed -n '2,/^$/s/^# \{0,1\}//p' $0; exit 2 ;;
+esac
