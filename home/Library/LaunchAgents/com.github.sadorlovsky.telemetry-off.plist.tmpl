@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Runs telemetry-off whenever software is installed: launchd fires on any change
+  to the watched directories (new Cellar/Caskroom entry, new .app). The script
+  waits for brew to finish, diffs against what it has already seen, applies
+  known opt-outs and notifies about the rest. Loaded by
+  run_onchange_after_load-telemetry-off-agent.sh.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.github.sadorlovsky.telemetry-off</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>{{ .chezmoi.homeDir }}/.config/telemetry-off/telemetry-off</string>
+    <string>watch</string>
+    <string>--wait</string>
+  </array>
+  <key>WatchPaths</key>
+  <array>
+    <string>/opt/homebrew/Cellar</string>
+    <string>/opt/homebrew/Caskroom</string>
+    <string>/Applications</string>
+    <string>{{ .chezmoi.homeDir }}/.local/share/uv/tools</string>
+    <string>{{ .chezmoi.homeDir }}/.local/share/mise/installs</string>
+  </array>
+  <!-- Also once at login, to catch anything installed while it wasn't loaded. -->
+  <key>RunAtLoad</key>
+  <true/>
+  <!-- Coalesce bursts (brew bundle touches Cellar many times). -->
+  <key>ThrottleInterval</key>
+  <integer>20</integer>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>LowPriorityIO</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>{{ .chezmoi.homeDir }}/.local/state/telemetry-off/launchd.log</string>
+  <key>StandardErrorPath</key>
+  <string>{{ .chezmoi.homeDir }}/.local/state/telemetry-off/launchd.log</string>
+</dict>
+</plist>

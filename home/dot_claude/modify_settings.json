@@ -4,8 +4,24 @@
 # model, /config), so we don't manage it whole — this script receives the
 # current contents on stdin and only enforces the keys we consider canonical.
 # `try input catch {}` handles the fresh-machine case where the file is empty.
-jq -n 'try input catch {}
+#
+# Hooks: we own individual hook *entries*, not .hooks — other hooks (added by
+# hand or by tooling) are left alone. Ours are recognized by their command
+# string: any stale copy is dropped and the canonical one re-appended.
+jq -n '
+  def ensure_hook($event; $matcher; $cmd; $timeout):
+    .hooks[$event] = (
+      [ (.hooks[$event] // [])[]
+        | .hooks |= map(select(.command != $cmd))
+        | select((.hooks | length) > 0) ]
+      + [ { matcher: $matcher,
+            hooks: [ { type: "command", command: $cmd, timeout: $timeout } ] } ]
+    );
+
+  try input catch {}
   | .statusLine = {
       "type": "command",
       "command": "sh ~/.claude/statusline-command.sh"
-    }'
+    }
+  | ensure_hook("PostToolUse"; "Bash"; "~/.claude/hooks/telemetry-off.sh"; 60)
+'

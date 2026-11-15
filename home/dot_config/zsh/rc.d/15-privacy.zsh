@@ -32,3 +32,10 @@ export CHECKPOINT_DISABLE=1
 
 # Local LLM: don't log prompts to history
 export OLLAMA_NOHISTORY=1
+
+# Opt-outs learned by telemetry-off (~/.config/telemetry-off, database in
+# optouts.json): its env-var actions are compiled into this file. The command
+# itself lives outside PATH (~/.local/bin is reserved for uv shims).
+[[ -r ${XDG_STATE_HOME:-$HOME/.local/state}/telemetry-off/env.zsh ]] \
+  && source ${XDG_STATE_HOME:-$HOME/.local/state}/telemetry-off/env.zsh
+alias telemetry-off="$HOME/.config/telemetry-off/telemetry-off"

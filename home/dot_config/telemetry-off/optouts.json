@@ -1,0 +1,785 @@
+{
+  "no_telemetry": [
+    "age",
+    "atuin",
+    "audiowaveform",
+    "b2-tools",
+    "bat",
+    "chafa",
+    "chezmoi",
+    "curl",
+    "doctl",
+    "eza",
+    "fd",
+    "ffmpeg",
+    "fzf",
+    "git",
+    "git-delta",
+    "git-filter-repo",
+    "helix",
+    "hexyl",
+    "imapsync",
+    "jq",
+    "mas",
+    "node",
+    "perl",
+    "rclone",
+    "ripgrep",
+    "shellcheck",
+    "starship",
+    "ttdl",
+    "turso",
+    "uv",
+    "vivid",
+    "wget",
+    "yt-dlp",
+    "zoxide",
+    "zsh-ai",
+    "zsh-autosuggestions",
+    "zsh-history-substring-search",
+    "zsh-syntax-highlighting",
+    "font-fairfax",
+    "font-inter",
+    "font-jetbrains-mono",
+    "iina",
+    "com.colliderli.iina",
+    "wezterm",
+    "wezterm@nightly",
+    "com.github.wez.wezterm",
+    "tinycast",
+    "com.abueammar.tinycast",
+    "window-sweaters",
+    "local.knitborders.app",
+    "org.m0k.transmission",
+    "site.kaylees.Wipr2",
+    "io.raindrop.safari"
+  ],
+  "tools": {
+    "1password": {
+      "match": {
+        "cask": [
+          "1password",
+          "1password-cli"
+        ],
+        "app": [
+          "com.1password.1password",
+          "com.1password.safari"
+        ]
+      },
+      "actions": [
+        {
+          "type": "manual",
+          "text": "1Password → account name at top of sidebar → Manage Accounts → <account> → Usage data → uncheck \"Share information about your usage\" (account-level, syncs to all devices; covers op too)"
+        }
+      ],
+      "source": "https://support.1password.com/telemetry/",
+      "note": "Server-side, per-account setting; no local key. op has no flag of its own.",
+      "verified": "2026-11-15"
+    },
+    "anytype": {
+      "match": {
+        "cask": [
+          "anytype"
+        ],
+        "app": [
+          "com.anytype.anytype"
+        ]
+      },
+      "actions": [],
+      "source": "https://doc.anytype.io/anytype/data/analytics-and-tracking",
+      "note": "Amplitude + Sentry. No opt-out exists yet (docs: 'planned'); only host blocking helps.",
+      "verified": "2026-11-15"
+    },
+    "artcraft": {
+      "match": {
+        "cask": [
+          "figcraft",
+          "figcraft-cli"
+        ],
+        "app": [
+          "ai.storyteller.figcraft",
+          "ai.storyteller.artcraft-launcher"
+        ]
+      },
+      "actions": [],
+      "source": "https://storyteller.ai",
+      "note": "Unclear: no client analytics SDK found in the bundles, no documented setting. Cloud AI app — server-side collection likely.",
+      "verified": "2026-11-15"
+    },
+    "awscli": {
+      "match": {
+        "formula": [
+          "awscli"
+        ]
+      },
+      "actions": [
+        {
+          "type": "env",
+          "name": "AWS_CLI_SESSION_ID_DISABLED",
+          "value": "true"
+        }
+      ],
+      "source": "https://github.com/aws/aws-cli/blob/v2/awscli/telemetry.py",
+      "note": "No analytics service; v2 adds a hashed session id to every request's User-Agent. Ignores DO_NOT_TRACK.",
+      "verified": "2026-11-15"
+    },
+    "bun": {
+      "match": {
+        "formula": [
+          "bun"
+        ],
+        "mise": [
+          "bun"
+        ]
+      },
+      "actions": [],
+      "source": "https://bun.com/docs/runtime/bunfig",
+      "note": "Only crash reports to bun.report; covered by DO_NOT_TRACK=1 (15-privacy.zsh). bunfig `telemetry = false` is the same switch.",
+      "verified": "2026-11-15"
+    },
+    "chatgpt": {
+      "match": {
+        "cask": [
+          "chatgpt",
+          "chatgpt-classic"
+        ],
+        "app": [
+          "com.openai.chat"
+        ]
+      },
+      "actions": [],
+      "source": "https://help.openai.com/en/articles/20001535-managing-chatgpt-desktop-browser-policies-with-mdm",
+      "note": "Sentry + Statsig, no documented toggle. Settings → Data Controls → 'Improve the model' is training, not app analytics.",
+      "verified": "2026-11-15"
+    },
+    "claude-code": {
+      "match": {
+        "cask": [
+          "claude-code",
+          "claude-code@latest"
+        ],
+        "npm": [
+          "@anthropic-ai/claude-code"
+        ],
+        "app": [
+          "com.anthropic.claude-code-url-handler"
+        ]
+      },
+      "actions": [
+        {
+          "type": "manual",
+          "text": "Optional, not auto-applied: DISABLE_ERROR_REPORTING=1 and CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY=1 (in ~/.claude/settings.json env) are safe. Do NOT use DISABLE_TELEMETRY / DO_NOT_TRACK / CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC — they disable feature flags and break Remote Control."
+        }
+      ],
+      "source": "https://code.claude.com/docs/en/data-usage",
+      "note": "Usage metrics can't be turned off without losing Remote Control (deliberate exception, see rc.d/85-functions.zsh). Opt-out vars trigger on any non-empty value, even 0.",
+      "verified": "2026-11-15"
+    },
+    "claude-desktop": {
+      "match": {
+        "cask": [
+          "claude"
+        ],
+        "app": [
+          "com.anthropic.claudefordesktop"
+        ]
+      },
+      "actions": [],
+      "source": "https://claude.com/docs/third-party/claude-desktop/telemetry",
+      "note": "disable*Telemetry keys exist only for third-party-inference mode and only via MDM (/Library/Managed Preferences). No toggle for claude.ai sign-in.",
+      "verified": "2026-11-15"
+    },
+    "cloudflare-warp": {
+      "match": {
+        "cask": [
+          "cloudflare-warp"
+        ],
+        "app": [
+          "com.cloudflare.1dot1dot1dot1.macos"
+        ]
+      },
+      "actions": [],
+      "source": "https://developers.cloudflare.com/cloudflare-one/team-and-resources/devices/cloudflare-one-client/troubleshooting/diagnostic-logs/",
+      "note": "Bundles Sentry; no setting in warp-cli, MDM keys or UI.",
+      "verified": "2026-11-15"
+    },
+    "codex": {
+      "match": {
+        "cask": [
+          "codex"
+        ],
+        "npm": [
+          "@openai/codex"
+        ],
+        "app": [
+          "com.openai.codex"
+        ]
+      },
+      "actions": [
+        {
+          "type": "cmd",
+          "run": "mkdir -p ~/.codex && { grep -q '^\\[analytics\\]' ~/.codex/config.toml 2>/dev/null || printf '\\n[analytics]\\nenabled = false\\n' >> ~/.codex/config.toml; }",
+          "check": "awk '/^\\[/{s=($0==\"[analytics]\")} s&&/^enabled *= *false/{f=1} END{exit !f}' ~/.codex/config.toml"
+        }
+      ],
+      "source": "https://developers.openai.com/codex/config-reference",
+      "note": "Turns off the Statsig metrics exporter in Codex core (CLI and ChatGPT.app). Ignores DO_NOT_TRACK. If an [analytics] table with enabled = true already exists, run skips and check fails — fix by hand. The Electron UI's own Segment/Datadog/Sentry have no toggle.",
+      "verified": "2026-11-15"
+    },
+    "cursor": {
+      "match": {
+        "cask": [
+          "cursor"
+        ],
+        "app": [
+          "com.todesktop.230313mzl4w4u92"
+        ]
+      },
+      "actions": [
+        {
+          "type": "json",
+          "file": "~/Library/Application Support/Cursor/User/settings.json",
+          "path": [
+            "telemetry.telemetryLevel"
+          ],
+          "value": "off",
+          "create": true
+        },
+        {
+          "type": "manual",
+          "text": "Cursor Settings → General → Privacy Mode → enable (account-level, covers Cursor's own analytics)"
+        }
+      ],
+      "source": "https://cursor.com/privacy",
+      "note": "settings.json is JSONC once edited; key is a flat dotted string.",
+      "verified": "2026-11-15"
+    },
+    "delta": {
+      "match": {
+        "app": [
+          "com.zed-industries.delta"
+        ]
+      },
+      "actions": [],
+      "source": "local bundle inspection",
+      "note": "Binary has telemetry/hang/crash-reporting crates + Sentry endpoint; no settings key, no public docs.",
+      "verified": "2026-11-15"
+    },
+    "dotnet": {
+      "match": {
+        "formula": [
+          "dotnet"
+        ],
+        "cask": [
+          "dotnet-sdk"
+        ],
+        "mise": [
+          "dotnet"
+        ]
+      },
+      "actions": [],
+      "source": "https://learn.microsoft.com/dotnet/core/tools/telemetry",
+      "note": "DOTNET_CLI_TELEMETRY_OPTOUT=1 is exported in 15-privacy.zsh.",
+      "verified": "2026-11-15"
+    },
+    "dato": {
+      "match": {
+        "app": [
+          "com.sindresorhus.Dato"
+        ]
+      },
+      "actions": [],
+      "source": "https://sindresorhus.com/dato",
+      "note": "Sentry crash reports with embedded DSN; no opt-out.",
+      "verified": "2026-11-15"
+    },
+    "eas-cli": {
+      "match": {
+        "formula": [
+          "eas-cli"
+        ],
+        "npm": [
+          "eas-cli"
+        ]
+      },
+      "actions": [
+        {
+          "type": "env",
+          "name": "DISABLE_EAS_ANALYTICS",
+          "value": "1"
+        },
+        {
+          "type": "json",
+          "file": "~/.expo/user-settings.json",
+          "path": [
+            "analyticsEnabled"
+          ],
+          "value": false,
+          "create": true
+        }
+      ],
+      "source": "https://github.com/expo/eas-cli/blob/main/packages/eas-cli/src/analytics/AnalyticsManager.ts",
+      "note": "RudderStack; ignores DO_NOT_TRACK. Also disables experiments. Expo CLI itself uses EXPO_NO_TELEMETRY (see expo entry).",
+      "verified": "2026-11-15"
+    },
+    "expo": {
+      "match": {
+        "npm": [
+          "expo",
+          "expo-cli"
+        ]
+      },
+      "actions": [
+        {
+          "type": "env",
+          "name": "EXPO_NO_TELEMETRY",
+          "value": "1"
+        }
+      ],
+      "source": "https://docs.expo.dev/more/expo-cli/#telemetry",
+      "verified": "2026-11-15"
+    },
+    "firefox": {
+      "match": {
+        "cask": [
+          "firefox"
+        ],
+        "app": [
+          "org.mozilla.firefox"
+        ]
+      },
+      "actions": [
+        {
+          "type": "defaults",
+          "domain": "org.mozilla.firefox",
+          "key": "EnterprisePoliciesEnabled",
+          "kind": "bool",
+          "value": true
+        },
+        {
+          "type": "defaults",
+          "domain": "org.mozilla.firefox",
+          "key": "DisableTelemetry",
+          "kind": "bool",
+          "value": true
+        },
+        {
+          "type": "defaults",
+          "domain": "org.mozilla.firefox",
+          "key": "DisableFirefoxStudies",
+          "kind": "bool",
+          "value": true
+        }
+      ],
+      "source": "https://firefox-admin-docs.mozilla.org/reference/policies/disabletelemetry/",
+      "note": "User-level enterprise policies via defaults (no sudo). DisableTelemetry locks the datareporting/toolkit.telemetry upload prefs. Crash auto-submit and new-tab telemetry are separate user.js prefs.",
+      "verified": "2026-11-15"
+    },
+    "fl-studio": {
+      "match": {
+        "app": [
+          "com.image-line.flstudio",
+          "com.image-line.fl-cloud-plugins"
+        ]
+      },
+      "actions": [],
+      "source": "https://www.image-line.com/support/flstudio_online_manual/html/app_trouble.htm",
+      "note": "Unclear: no analytics SDK found; crash logs kept locally, no documented auto-send or toggle.",
+      "verified": "2026-11-15"
+    },
+    "flyctl": {
+      "match": {
+        "formula": [
+          "flyctl"
+        ]
+      },
+      "actions": [
+        {
+          "type": "env",
+          "name": "FLY_SEND_METRICS",
+          "value": "false"
+        },
+        {
+          "type": "env",
+          "name": "FLY_SYNTHETICS_AGENT",
+          "value": "false"
+        },
+        {
+          "type": "cmd",
+          "run": "fly settings analytics disable",
+          "check": "grep -q '^send_metrics: false' ~/.fly/config.yml"
+        },
+        {
+          "type": "cmd",
+          "run": "fly settings synthetics disable",
+          "check": "grep -q '^synthetics_agent: false' ~/.fly/config.yml"
+        }
+      ],
+      "source": "https://fly.io/docs/flyctl/settings-analytics/",
+      "note": "Metrics on by default, ignores DO_NOT_TRACK. The synthetics agent runs network probes for Fly from this machine.",
+      "verified": "2026-11-15"
+    },
+    "gh": {
+      "match": {
+        "formula": [
+          "gh"
+        ]
+      },
+      "actions": [
+        {
+          "type": "env",
+          "name": "GH_TELEMETRY",
+          "value": "false"
+        },
+        {
+          "type": "cmd",
+          "run": "gh config set telemetry disabled",
+          "check": "[ \"$(gh config get telemetry)\" = disabled ]"
+        }
+      ],
+      "source": "https://docs.github.com/en/github-cli/github-cli/github-cli-telemetry",
+      "note": "On by default since v2.91.0; DO_NOT_TRACK also works. Config covers non-shell launches. Extensions and Copilot CLI not covered.",
+      "verified": "2026-11-15"
+    },
+    "go": {
+      "match": {
+        "formula": [
+          "go"
+        ],
+        "mise": [
+          "go"
+        ]
+      },
+      "actions": [
+        {
+          "type": "cmd",
+          "run": "go telemetry off",
+          "check": "[ \"$(go telemetry)\" = off ]"
+        }
+      ],
+      "source": "https://go.dev/doc/telemetry",
+      "note": "Default 'local' collects counters on disk without uploading; 'off' stops collection. Ignores DO_NOT_TRACK.",
+      "verified": "2026-11-15"
+    },
+    "google-chrome": {
+      "match": {
+        "cask": [
+          "google-chrome"
+        ],
+        "app": [
+          "com.google.Chrome"
+        ]
+      },
+      "actions": [
+        {
+          "type": "json",
+          "file": "~/Library/Application Support/Google/Chrome/Local State",
+          "path": [
+            "user_experience_metrics",
+            "reporting_enabled"
+          ],
+          "value": false,
+          "requires_quit": "Google Chrome"
+        },
+        {
+          "type": "manual",
+          "text": "chrome://settings/syncSetup → turn off \"Help improve Chrome's features and performance\" and \"Make searches and browsing better\""
+        }
+      ],
+      "source": "https://chromium.googlesource.com/chromium/src/+/main/components/policy/core/common/policy_loader_mac.mm",
+      "note": "`defaults write com.google.Chrome MetricsReportingEnabled` does NOT work on an unmanaged Mac (sensitive policy, filtered without MDM). Local State is only safe to edit while Chrome is quit.",
+      "verified": "2026-11-15"
+    },
+    "homebrew": {
+      "always": true,
+      "actions": [
+        {
+          "type": "env",
+          "name": "HOMEBREW_NO_ANALYTICS",
+          "value": "1"
+        },
+        {
+          "type": "cmd",
+          "run": "brew analytics off",
+          "check": "brew analytics state 2>/dev/null | grep -qi disabled"
+        }
+      ],
+      "source": "https://docs.brew.sh/Analytics",
+      "note": "The env var only reaches shells that load rc.d; `brew analytics off` persists in Homebrew's git config for every caller.",
+      "verified": "2026-11-15"
+    },
+    "microsoft-office": {
+      "match": {
+        "cask": [
+          "microsoft-office",
+          "microsoft-word",
+          "microsoft-excel",
+          "microsoft-powerpoint",
+          "microsoft-outlook",
+          "microsoft-auto-update"
+        ],
+        "app": [
+          "com.microsoft.Word",
+          "com.microsoft.Excel",
+          "com.microsoft.Powerpoint",
+          "com.microsoft.Outlook",
+          "com.microsoft.autoupdate2"
+        ]
+      },
+      "actions": [
+        {
+          "type": "defaults",
+          "domain": "com.microsoft.office",
+          "key": "DiagnosticDataTypePreference",
+          "kind": "string",
+          "value": "ZeroDiagnosticData"
+        },
+        {
+          "type": "defaults",
+          "domain": "com.microsoft.office",
+          "key": "OptionalConnectedExperiencesPreference",
+          "kind": "bool",
+          "value": false
+        },
+        {
+          "type": "defaults",
+          "domain": "com.microsoft.autoupdate2",
+          "key": "AcknowledgedDataCollectionPolicy",
+          "kind": "string",
+          "value": "RequiredDataOnly"
+        },
+        {
+          "type": "defaults",
+          "domain": "com.microsoft.autoupdate2",
+          "key": "SendAllTelemetryEnabled",
+          "kind": "bool",
+          "value": false
+        }
+      ],
+      "source": "https://learn.microsoft.com/en-us/microsoft-365-apps/privacy/mac-privacy-preferences",
+      "note": "Best applied before first launch.",
+      "verified": "2026-11-15"
+    },
+    "minecraft": {
+      "match": {
+        "cask": [
+          "minecraft"
+        ],
+        "app": [
+          "com.mojang.minecraftlauncher"
+        ]
+      },
+      "actions": [
+        {
+          "type": "manual",
+          "text": "Minecraft Java: Options… → Telemetry Data… → Minimal (can't be fully off online)"
+        }
+      ],
+      "source": "https://bugs-legacy.mojang.com/browse/MC-258857",
+      "note": "Launcher has no opt-out.",
+      "verified": "2026-11-15"
+    },
+    "mise": {
+      "match": {
+        "formula": [
+          "mise"
+        ]
+      },
+      "actions": [
+        {
+          "type": "env",
+          "name": "MISE_USE_VERSIONS_HOST_TRACK",
+          "value": "false"
+        },
+        {
+          "type": "cmd",
+          "run": "mise settings set use_versions_host_track false",
+          "check": "[ \"$(mise settings get use_versions_host_track)\" = false ]"
+        }
+      ],
+      "source": "https://mise.jdx.dev/configuration/settings.html#use_versions_host_track",
+      "note": "Sends download stats (tool, version, OS, shell, IP) to mise-versions.jdx.dev after installs. Ignores DO_NOT_TRACK.",
+      "verified": "2026-11-15"
+    },
+    "orbstack": {
+      "match": {
+        "cask": [
+          "orbstack"
+        ],
+        "app": [
+          "dev.kdrag0n.MacVirt"
+        ]
+      },
+      "actions": [],
+      "source": "https://docs.orbstack.dev/legal/privacy",
+      "note": "Sentry crash reports + usage data; no opt-out in `orb config` or settings.",
+      "verified": "2026-11-15"
+    },
+    "raycast": {
+      "match": {
+        "cask": [
+          "raycast"
+        ],
+        "app": [
+          "com.raycast.macos"
+        ]
+      },
+      "actions": [],
+      "source": "https://www.raycast.com/faq",
+      "note": "Usage stats + Sentry; no documented toggle or defaults key. Re-check: a toggle may exist in Settings → Advanced.",
+      "verified": "2026-11-15"
+    },
+    "roblox": {
+      "match": {
+        "cask": [
+          "roblox"
+        ],
+        "app": [
+          "com.roblox.RobloxPlayer"
+        ]
+      },
+      "actions": [],
+      "source": "https://www.roblox.com/info/privacy",
+      "note": "No opt-out.",
+      "verified": "2026-11-15"
+    },
+    "steam": {
+      "match": {
+        "cask": [
+          "steam"
+        ],
+        "app": [
+          "com.valvesoftware.steam"
+        ]
+      },
+      "actions": [
+        {
+          "type": "manual",
+          "text": "Decline the Steam Hardware & Software Survey prompt when it appears (opt-in)"
+        }
+      ],
+      "source": "https://store.steampowered.com/privacy_agreement/",
+      "note": "Crash handler (Breakpad) has no setting.",
+      "verified": "2026-11-15"
+    },
+    "tailscale": {
+      "match": {
+        "cask": [
+          "tailscale",
+          "tailscale-app"
+        ],
+        "app": [
+          "io.tailscale.ipn.macsys",
+          "io.tailscale.ipn.macos"
+        ]
+      },
+      "actions": [],
+      "source": "https://tailscale.com/docs/features/logging",
+      "note": "Client logs to log.tailscale.io. --no-logs-no-support only works with open-source tailscaled, not the app (tailscale/tailscale#5114).",
+      "verified": "2026-11-15"
+    },
+    "telegram": {
+      "match": {
+        "cask": [
+          "telegram"
+        ],
+        "app": [
+          "ru.keepcoder.Telegram"
+        ]
+      },
+      "actions": [],
+      "source": "https://github.com/overtake/TelegramSwift",
+      "note": "Unclear: no analytics SDK; built-in crash-report flow without a documented setting.",
+      "verified": "2026-11-15"
+    },
+    "visual-studio-code": {
+      "match": {
+        "cask": [
+          "visual-studio-code"
+        ],
+        "app": [
+          "com.microsoft.VSCode"
+        ]
+      },
+      "actions": [
+        {
+          "type": "json",
+          "file": "~/Library/Application Support/Code/User/settings.json",
+          "path": [
+            "telemetry.telemetryLevel"
+          ],
+          "value": "off",
+          "create": true
+        }
+      ],
+      "source": "https://code.visualstudio.com/docs/configure/telemetry",
+      "note": "Flat dotted key. Extensions may have their own (e.g. redhat.telemetry.enabled).",
+      "verified": "2026-11-15"
+    },
+    "wrangler": {
+      "match": {
+        "formula": [
+          "cloudflare-wrangler"
+        ],
+        "npm": [
+          "wrangler"
+        ]
+      },
+      "actions": [
+        {
+          "type": "env",
+          "name": "WRANGLER_SEND_METRICS",
+          "value": "false"
+        },
+        {
+          "type": "env",
+          "name": "WRANGLER_SEND_ERROR_REPORTS",
+          "value": "false"
+        },
+        {
+          "type": "cmd",
+          "run": "wrangler telemetry disable",
+          "check": "env -u WRANGLER_SEND_METRICS -u DO_NOT_TRACK wrangler telemetry status 2>&1 | grep -q \"Status: Disabled\""
+        }
+      ],
+      "source": "https://github.com/cloudflare/workers-sdk/blob/main/packages/wrangler/telemetry.md",
+      "note": "Usage metrics also covered by DO_NOT_TRACK; error reports are a separate setting.",
+      "verified": "2026-11-15"
+    },
+    "zed": {
+      "match": {
+        "cask": [
+          "zed",
+          "zed@preview"
+        ],
+        "app": [
+          "dev.zed.Zed",
+          "dev.zed.Zed-Preview"
+        ]
+      },
+      "actions": [
+        {
+          "type": "json",
+          "file": "~/.config/zed/settings.json",
+          "path": [
+            "telemetry",
+            "diagnostics"
+          ],
+          "value": false
+        },
+        {
+          "type": "json",
+          "file": "~/.config/zed/settings.json",
+          "path": [
+            "telemetry",
+            "metrics"
+          ],
+          "value": false
+        }
+      ],
+      "source": "https://zed.dev/docs/telemetry",
+      "note": "settings.json is JSONC: checked, never rewritten — set by hand if off. Server-side telemetry still applies with sign-in / AI / collab.",
+      "verified": "2026-11-15"
+    }
+  }
+}
